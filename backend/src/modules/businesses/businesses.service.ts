@@ -73,7 +73,11 @@ export class BusinessesService {
         isDeleted: false,
       });
       const savedBusiness = await manager.save(business);
-      return this.findOne(savedBusiness.id);
+      // Load inside the same transaction so the new row is visible
+      return manager.findOneOrFail(Business, {
+        where: { id: savedBusiness.id },
+        relations: ['owner', 'city', 'stores'],
+      });
     });
   }
 
@@ -84,7 +88,7 @@ export class BusinessesService {
       .createQueryBuilder('business')
       .leftJoinAndSelect('business.owner', 'owner')
       .leftJoinAndSelect('business.city', 'city')
-      .where('business.is_deleted = :deleted', { deleted: false });
+      .where('business.isDeleted = :deleted', { deleted: false });
 
     if (query.search) {
       qb.andWhere('business.name LIKE :search', { search: `%${query.search}%` });
@@ -93,7 +97,7 @@ export class BusinessesService {
       qb.andWhere('business.status = :status', { status: query.status });
     }
 
-    qb.orderBy('business.created_date', 'DESC')
+    qb.orderBy('business.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

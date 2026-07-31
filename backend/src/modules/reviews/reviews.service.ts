@@ -52,7 +52,7 @@ export class ReviewsService {
       qb.andWhere('review.offer_id = :offerId', { offerId: query.offerId });
     }
 
-    qb.orderBy('review.created_date', 'DESC')
+    qb.orderBy('review.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

@@ -39,7 +39,7 @@ export class UsersService {
       qb.andWhere('role.name = :role', { role: query.role });
     }
 
-    qb.orderBy('user.created_date', 'DESC')
+    qb.orderBy('user.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

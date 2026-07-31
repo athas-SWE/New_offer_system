@@ -11,7 +11,9 @@ import { AuthService } from '../../services/auth.service';
     <div class="page-shell flex min-h-[70vh] items-center justify-center animate-fade-in">
       <div class="w-full max-w-md surface-panel">
         <p class="font-display text-3xl font-semibold text-teal-900">Welcome back</p>
-        <p class="mt-2 text-sm text-[var(--color-muted)]">Log in to Offer Lanka to save deals and manage your account.</p>
+        <p class="mt-2 text-sm text-[var(--color-muted)]">
+          Admin and business owners sign in here. Shoppers can browse offers without an account.
+        </p>
 
         <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
           <div>
@@ -37,7 +39,7 @@ import { AuthService } from '../../services/auth.service';
           <a routerLink="/register" class="font-semibold text-teal-700 hover:underline">Create an account</a>
         </p>
         <p class="mt-2 text-center text-xs text-[var(--color-muted)]">
-          Tip: admin&#64;offerlanka.lk · business&#64;offerlanka.lk · shopper&#64;offerlanka.lk
+          Tip: admin&#64;offerlanka.lk · business&#64;offerlanka.lk
         </p>
       </div>
     </div>
@@ -74,7 +76,8 @@ export class LoginComponent {
         } else if (res.user.role === 'BUSINESS_OWNER') {
           void this.router.navigate(['/business']);
         } else {
-          void this.router.navigate(['/dashboard']);
+          // No customer login — send anyone else to the public marketplace
+          void this.router.navigate(['/']);
         }
       },
       error: (err: Error) => {

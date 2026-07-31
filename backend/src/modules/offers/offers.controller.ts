@@ -44,8 +44,12 @@ export class OffersController {
   @Get('manage')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'List all offers for management' })
-  findAllManage(@Query() query: OfferQueryDto) {
-    return this.offersService.findAll(query, false);
+  findAllManage(
+    @Query() query: OfferQueryDto,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.offersService.findAll(query, false, { id: userId, role });
   }
 
   @Public()

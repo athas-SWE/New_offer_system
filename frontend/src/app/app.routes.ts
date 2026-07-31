@@ -35,18 +35,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/search/search.component').then((m) => m.SearchComponent),
   },
   {
-    path: 'favorites',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/favorites/favorites.component').then((m) => m.FavoritesComponent),
-  },
-  {
-    path: 'notifications',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/notifications/notifications.component').then((m) => m.NotificationsComponent),
-  },
-  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
@@ -70,21 +58,13 @@ export const routes: Routes = [
       import('./pages/admin-dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent),
   },
   {
-    path: 'dashboard',
-    canActivate: [authGuard, roleGuard('CUSTOMER', 'ADMIN')],
-    loadComponent: () =>
-      import('./pages/shopper-dashboard/shopper-dashboard.component').then(
-        (m) => m.ShopperDashboardComponent
-      ),
-  },
-  {
     path: 'profile',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard('ADMIN', 'BUSINESS_OWNER')],
     loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
     path: 'settings',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard('ADMIN', 'BUSINESS_OWNER')],
     loadComponent: () =>
       import('./pages/settings/settings.component').then((m) => m.SettingsComponent),
   },

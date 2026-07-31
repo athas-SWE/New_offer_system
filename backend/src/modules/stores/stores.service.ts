@@ -47,16 +47,16 @@ export class StoresService {
       .createQueryBuilder('store')
       .leftJoinAndSelect('store.business', 'business')
       .leftJoinAndSelect('store.city', 'city')
-      .where('store.is_deleted = :deleted', { deleted: false });
+      .where('store.isDeleted = :deleted', { deleted: false });
 
     if (query.search) {
       qb.andWhere('store.name LIKE :search', { search: `%${query.search}%` });
     }
     if (query.businessId) {
-      qb.andWhere('store.business_id = :businessId', { businessId: query.businessId });
+      qb.andWhere('store.businessId = :businessId', { businessId: query.businessId });
     }
 
-    qb.orderBy('store.created_date', 'DESC')
+    qb.orderBy('store.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

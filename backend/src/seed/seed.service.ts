@@ -30,7 +30,6 @@ export class SeedService implements OnModuleInit {
       await this.seedRoles();
       await this.seedAdmin();
       await this.seedBusinessOwner();
-      await this.seedShopper();
     } catch (error) {
       this.logger.warn(`Seed skipped/failed: ${(error as Error).message}`);
     }
@@ -130,12 +129,4 @@ export class SeedService implements OnModuleInit {
     this.logger.log('Seeded demo business: Colombo Demo Store');
   }
 
-  private async seedShopper() {
-    await this.ensureUser({
-      email: 'shopper@offerlanka.lk',
-      password: 'Shopper@12345',
-      name: 'Demo Shopper',
-      role: UserRole.CUSTOMER,
-    });
-  }
 }

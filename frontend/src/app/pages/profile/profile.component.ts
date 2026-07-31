@@ -25,7 +25,6 @@ import { User } from '../../models';
             <span class="chip mt-3">{{ user.role }}</span>
             <div class="mt-6 flex flex-col gap-2">
               <a routerLink="/settings" class="btn-secondary !justify-start">Settings</a>
-              <a routerLink="/favorites" class="btn-secondary !justify-start">Favourites</a>
               <button type="button" class="btn-secondary !justify-start !text-red-700" (click)="auth.logout()">Log out</button>
             </div>
           </div>

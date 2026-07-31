@@ -30,7 +30,7 @@ export class ReportsService {
       qb.andWhere('offer.business_id = :businessId', { businessId });
     }
 
-    const offers = await qb.orderBy('offer.created_date', 'DESC').getMany();
+    const offers = await qb.orderBy('offer.createdDate', 'DESC').getMany();
 
     return {
       generatedAt: new Date().toISOString(),

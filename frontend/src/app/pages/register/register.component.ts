@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserRole } from '../../models';
 
 @Component({
   selector: 'app-register',
@@ -11,8 +10,10 @@ import { UserRole } from '../../models';
   template: `
     <div class="page-shell flex min-h-[70vh] items-center justify-center animate-fade-in">
       <div class="w-full max-w-md surface-panel">
-        <p class="font-display text-3xl font-semibold text-teal-900">Join Offer Lanka</p>
-        <p class="mt-2 text-sm text-[var(--color-muted)]">Create an account to save favourites and unlock dashboards.</p>
+        <p class="font-display text-3xl font-semibold text-teal-900">List your business</p>
+        <p class="mt-2 text-sm text-[var(--color-muted)]">
+          Create a business owner account to publish offers on Offer Lanka. Shoppers can browse without logging in.
+        </p>
 
         <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
           <div>
@@ -31,20 +32,13 @@ import { UserRole } from '../../models';
             <label class="mb-1 block text-sm font-medium text-teal-900" for="password">Password</label>
             <input id="password" type="password" class="input-field" formControlName="password" placeholder="At least 8 characters" />
           </div>
-          <div>
-            <label class="mb-1 block text-sm font-medium text-teal-900" for="role">I am a</label>
-            <select id="role" class="input-field" formControlName="role">
-              <option value="CUSTOMER">Shopper</option>
-              <option value="BUSINESS_OWNER">Business owner</option>
-            </select>
-          </div>
 
           @if (error) {
             <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{{ error }}</p>
           }
 
           <button type="submit" class="btn-primary w-full" [disabled]="form.invalid || loading">
-            {{ loading ? 'Creating…' : 'Create account' }}
+            {{ loading ? 'Creating…' : 'Create business account' }}
           </button>
         </form>
 
@@ -69,7 +63,6 @@ export class RegisterComponent {
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
     password: ['', [Validators.required, Validators.minLength(8)]],
-    role: ['CUSTOMER' as UserRole, Validators.required],
   });
 
   submit(): void {
@@ -77,21 +70,20 @@ export class RegisterComponent {
     this.loading = true;
     this.error = '';
     const value = this.form.getRawValue();
-    this.auth.register(value).subscribe({
-      next: (res) => {
-        this.loading = false;
-        if (res.user.role === 'BUSINESS_OWNER') {
+    this.auth
+      .register({
+        ...value,
+        role: 'BUSINESS_OWNER',
+      })
+      .subscribe({
+        next: () => {
+          this.loading = false;
           void this.router.navigate(['/business']);
-        } else if (res.user.role === 'ADMIN') {
-          void this.router.navigate(['/admin']);
-        } else {
-          void this.router.navigate(['/dashboard']);
-        }
-      },
-      error: (err: Error) => {
-        this.loading = false;
-        this.error = err.message || 'Registration failed';
-      },
-    });
+        },
+        error: (err: Error) => {
+          this.loading = false;
+          this.error = err.message || 'Registration failed';
+        },
+      });
   }
 }

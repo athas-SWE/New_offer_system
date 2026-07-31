@@ -1,9 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Offer } from '../../models';
-import { FavoritesService } from '../../services/favorites.service';
-import { AuthService } from '../../services/auth.service';
 import { formatLkr } from '../../shared/utils';
 
 @Component({
@@ -36,39 +34,15 @@ import { formatLkr } from '../../shared/utils';
       </a>
       <div class="flex items-center justify-between border-t border-teal-50 px-4 py-2">
         <span class="chip">{{ offer.categoryName || 'Offer' }}</span>
-        <button
-          type="button"
-          class="rounded-full p-2 text-teal-700 transition hover:bg-teal-50"
-          (click)="onFavorite($event)"
-          [attr.aria-label]="favorited ? 'Remove favourite' : 'Save favourite'"
-        >
-          <mat-icon>{{ favorited ? 'favorite' : 'favorite_border' }}</mat-icon>
-        </button>
+        <span class="text-xs font-semibold text-teal-700">View deal</span>
       </div>
     </article>
   `,
 })
 export class OfferCardComponent {
   @Input({ required: true }) offer!: Offer;
-  @Output() favoriteToggled = new EventEmitter<boolean>();
-
-  private readonly favorites = inject(FavoritesService);
-  private readonly auth = inject(AuthService);
-
-  get favorited(): boolean {
-    return this.favorites.isFavorite(this.offer.id);
-  }
 
   formatPrice(amount: number): string {
     return formatLkr(amount);
-  }
-
-  onFavorite(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!this.auth.isAuthenticated) {
-      return;
-    }
-    this.favorites.toggle(this.offer).subscribe((state) => this.favoriteToggled.emit(state));
   }
 }

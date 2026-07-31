@@ -1,9 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { OffersService } from '../../services/offers.service';
-import { FavoritesService } from '../../services/favorites.service';
-import { AuthService } from '../../services/auth.service';
 import { Offer } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
 import { formatDate, formatLkr } from '../../shared/utils';
@@ -11,7 +8,7 @@ import { formatDate, formatLkr } from '../../shared/utils';
 @Component({
   selector: 'app-offer-details',
   standalone: true,
-  imports: [RouterLink, MatIconModule, LoadingSpinnerComponent],
+  imports: [RouterLink, LoadingSpinnerComponent],
   template: `
     <div class="page-shell animate-fade-in">
       @if (loading) {
@@ -61,17 +58,11 @@ import { formatDate, formatLkr } from '../../shared/utils';
             }
 
             <div class="mt-8 flex flex-wrap gap-3">
-              <button type="button" class="btn-primary" (click)="toggleFavorite()">
-                <mat-icon>{{ favorited ? 'favorite' : 'favorite_border' }}</mat-icon>
-                {{ favorited ? 'Saved' : 'Save favourite' }}
-              </button>
-              <a [routerLink]="['/stores', offer.storeId]" class="btn-secondary">View store</a>
+              <a routerLink="/offers" class="btn-primary">Browse more offers</a>
+              @if (offer.storeId) {
+                <a [routerLink]="['/stores', offer.storeId]" class="btn-secondary">View store</a>
+              }
             </div>
-            @if (!auth.isAuthenticated) {
-              <p class="mt-3 text-sm text-[var(--color-muted)]">
-                <a routerLink="/login" class="font-semibold text-teal-700 underline">Log in</a> to save favourites.
-              </p>
-            }
           </div>
         </div>
       }
@@ -81,15 +72,9 @@ import { formatDate, formatLkr } from '../../shared/utils';
 export class OfferDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly offersService = inject(OffersService);
-  private readonly favorites = inject(FavoritesService);
-  readonly auth = inject(AuthService);
 
   offer?: Offer;
   loading = true;
-
-  get favorited(): boolean {
-    return !!this.offer && this.favorites.isFavorite(this.offer.id);
-  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
@@ -105,12 +90,5 @@ export class OfferDetailsComponent implements OnInit {
 
   date(value: string): string {
     return formatDate(value);
-  }
-
-  toggleFavorite(): void {
-    if (!this.offer || !this.auth.isAuthenticated) {
-      return;
-    }
-    this.favorites.toggle(this.offer).subscribe();
   }
 }

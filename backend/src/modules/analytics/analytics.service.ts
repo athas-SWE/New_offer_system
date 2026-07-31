@@ -68,7 +68,7 @@ export class AnalyticsService {
       qb.andWhere('a.business_id = :businessId', { businessId });
     }
 
-    qb.orderBy('a.created_date', 'DESC')
+    qb.orderBy('a.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

@@ -65,7 +65,11 @@ export class OffersService {
     return this.findOne(saved.id);
   }
 
-  async findAll(query: OfferQueryDto, publicOnly = false) {
+  async findAll(
+    query: OfferQueryDto,
+    publicOnly = false,
+    actor?: { id: string; role: string },
+  ) {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const qb = this.offerRepo
@@ -74,12 +78,24 @@ export class OffersService {
       .leftJoinAndSelect('offer.category', 'category')
       .leftJoinAndSelect('offer.city', 'city')
       .leftJoinAndSelect('offer.images', 'images')
-      .where('offer.is_deleted = :deleted', { deleted: false });
+      .where('offer.isDeleted = :deleted', { deleted: false });
 
     if (publicOnly) {
       qb.andWhere('offer.status = :status', { status: OfferStatus.ACTIVE });
     } else if (query.status) {
       qb.andWhere('offer.status = :status', { status: query.status });
+    }
+
+    if (!publicOnly && actor?.role === UserRole.BUSINESS_OWNER) {
+      const business = await this.businessRepo.findOne({
+        where: { ownerId: actor.id, isDeleted: false },
+      });
+      if (!business) {
+        return paginate([], 0, page, limit);
+      }
+      qb.andWhere('offer.businessId = :ownerBusinessId', {
+        ownerBusinessId: business.id,
+      });
     }
 
     if (query.search) {
@@ -88,16 +104,16 @@ export class OffersService {
       });
     }
     if (query.categoryId) {
-      qb.andWhere('offer.category_id = :categoryId', { categoryId: query.categoryId });
+      qb.andWhere('offer.categoryId = :categoryId', { categoryId: query.categoryId });
     }
     if (query.cityId) {
-      qb.andWhere('offer.city_id = :cityId', { cityId: query.cityId });
+      qb.andWhere('offer.cityId = :cityId', { cityId: query.cityId });
     }
     if (query.businessId) {
-      qb.andWhere('offer.business_id = :businessId', { businessId: query.businessId });
+      qb.andWhere('offer.businessId = :businessId', { businessId: query.businessId });
     }
 
-    qb.orderBy('offer.created_date', 'DESC')
+    qb.orderBy('offer.createdDate', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 

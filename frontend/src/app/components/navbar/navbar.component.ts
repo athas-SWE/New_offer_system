@@ -4,7 +4,6 @@ import { AsyncPipe, NgIf } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../services/auth.service';
-import { NotificationsService } from '../../services/notifications.service';
 
 @Component({
   selector: 'app-navbar',
@@ -33,16 +32,7 @@ import { NotificationsService } from '../../services/notifications.service';
           <a routerLink="/search" class="rounded-lg p-2 text-teal-800 hover:bg-teal-50" aria-label="Search">
             <mat-icon>search</mat-icon>
           </a>
-          <a routerLink="/notifications" class="relative rounded-lg p-2 text-teal-800 hover:bg-teal-50" aria-label="Notifications">
-            <mat-icon>notifications</mat-icon>
-            @if (unread > 0) {
-              <span class="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-500"></span>
-            }
-          </a>
           <ng-container *ngIf="auth.currentUser$ | async as user; else guest">
-            <a routerLink="/favorites" class="hidden rounded-lg p-2 text-teal-800 hover:bg-teal-50 sm:inline-flex" aria-label="Favorites">
-              <mat-icon>favorite_border</mat-icon>
-            </a>
             <a routerLink="/profile" class="hidden rounded-xl bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 sm:inline-flex">
               {{ user.name }}
             </a>
@@ -52,13 +42,10 @@ import { NotificationsService } from '../../services/notifications.service';
             @if (user.role === 'BUSINESS_OWNER') {
               <a routerLink="/business" class="btn-primary !px-3 !py-2 text-xs">Business</a>
             }
-            @if (user.role === 'CUSTOMER') {
-              <a routerLink="/dashboard" class="btn-primary !px-3 !py-2 text-xs">My deals</a>
-            }
           </ng-container>
           <ng-template #guest>
             <a routerLink="/login" class="btn-secondary !px-3 !py-2 text-xs">Log in</a>
-            <a routerLink="/register" class="btn-primary !px-3 !py-2 text-xs">Join</a>
+            <a routerLink="/register" class="btn-primary !px-3 !py-2 text-xs">List business</a>
           </ng-template>
 
           <button type="button" class="rounded-lg p-2 text-teal-800 hover:bg-teal-50 md:hidden" (click)="menuOpen = !menuOpen" aria-label="Menu">
@@ -83,7 +70,6 @@ import { NotificationsService } from '../../services/notifications.service';
 })
 export class NavbarComponent {
   readonly auth = inject(AuthService);
-  private readonly notifications = inject(NotificationsService);
 
   menuOpen = false;
   links = [
@@ -93,8 +79,4 @@ export class NavbarComponent {
     { path: '/about', label: 'About' },
     { path: '/contact', label: 'Contact' },
   ];
-
-  get unread(): number {
-    return this.notifications.unreadCount();
-  }
 }

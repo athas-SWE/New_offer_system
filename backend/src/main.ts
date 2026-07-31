@@ -71,10 +71,10 @@ async function bootstrap() {
           '2. Copy `accessToken` from the response',
           '3. Click **Authorize** and paste: `Bearer <accessToken>` or just the token',
           '',
-          '### Roles',
-          '`ADMIN` · `BUSINESS_OWNER` · `CUSTOMER`',
+          '### Roles (login)',
+          '`ADMIN` · `BUSINESS_OWNER` — shoppers browse publicly without login',
           '',
-          'Default seeded admin: `admin@offerlanka.lk` / `Admin@12345`',
+          'Seeded: `admin@offerlanka.lk` / `Admin@12345` · `business@offerlanka.lk` / `Business@12345`',
         ].join('\n'),
       )
       .setVersion('1.0')
