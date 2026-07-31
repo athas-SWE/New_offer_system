@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS users (
   CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
-CREATE TABLE IF NOT EXISTS businesses (
+CREATE TABLE IF NOT EXISTS shops (
   id CHAR(36) PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
   description TEXT NULL,
@@ -71,35 +71,18 @@ CREATE TABLE IF NOT EXISTS businesses (
   address VARCHAR(500) NULL,
   logo_url VARCHAR(500) NULL,
   status ENUM('PENDING','APPROVED','REJECTED','SUSPENDED') NOT NULL DEFAULT 'PENDING',
-  owner_id CHAR(36) NOT NULL UNIQUE,
-  city_id CHAR(36) NULL,
-  created_by VARCHAR(36) NULL,
-  updated_by VARCHAR(36) NULL,
-  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-  CONSTRAINT fk_businesses_owner FOREIGN KEY (owner_id) REFERENCES users(id),
-  CONSTRAINT fk_businesses_city FOREIGN KEY (city_id) REFERENCES cities(id)
-);
-
-CREATE TABLE IF NOT EXISTS stores (
-  id CHAR(36) PRIMARY KEY,
-  name VARCHAR(200) NOT NULL,
-  description TEXT NULL,
-  address VARCHAR(500) NULL,
-  phone VARCHAR(30) NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
   latitude DECIMAL(10,7) NULL,
   longitude DECIMAL(10,7) NULL,
-  is_active TINYINT(1) NOT NULL DEFAULT 1,
-  business_id CHAR(36) NOT NULL,
+  owner_id CHAR(36) NOT NULL,
   city_id CHAR(36) NULL,
   created_by VARCHAR(36) NULL,
   updated_by VARCHAR(36) NULL,
   created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-  CONSTRAINT fk_stores_business FOREIGN KEY (business_id) REFERENCES businesses(id),
-  CONSTRAINT fk_stores_city FOREIGN KEY (city_id) REFERENCES cities(id)
+  CONSTRAINT fk_shops_owner FOREIGN KEY (owner_id) REFERENCES users(id),
+  CONSTRAINT fk_shops_city FOREIGN KEY (city_id) REFERENCES cities(id)
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -134,7 +117,7 @@ CREATE TABLE IF NOT EXISTS offers (
   views INT NOT NULL DEFAULT 0,
   likes INT NOT NULL DEFAULT 0,
   status ENUM('DRAFT','PENDING','ACTIVE','EXPIRED','REJECTED','INACTIVE') NOT NULL DEFAULT 'DRAFT',
-  business_id CHAR(36) NOT NULL,
+  shop_id CHAR(36) NOT NULL,
   category_id CHAR(36) NULL,
   city_id CHAR(36) NULL,
   created_by VARCHAR(36) NULL,
@@ -142,7 +125,7 @@ CREATE TABLE IF NOT EXISTS offers (
   created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-  CONSTRAINT fk_offers_business FOREIGN KEY (business_id) REFERENCES businesses(id),
+  CONSTRAINT fk_offers_shop FOREIGN KEY (shop_id) REFERENCES shops(id),
   CONSTRAINT fk_offers_category FOREIGN KEY (category_id) REFERENCES categories(id),
   CONSTRAINT fk_offers_city FOREIGN KEY (city_id) REFERENCES cities(id)
 );
@@ -231,6 +214,22 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   user_id VARCHAR(36) NULL,
   changes JSON NULL,
   ip_address VARCHAR(45) NULL,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS hero_slides (
+  id CHAR(36) PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  subtitle VARCHAR(500) NULL,
+  image_url VARCHAR(700) NOT NULL,
+  cta_label VARCHAR(80) NULL,
+  cta_link VARCHAR(300) NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_by VARCHAR(36) NULL,
   updated_by VARCHAR(36) NULL,
   created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),

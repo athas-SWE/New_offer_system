@@ -1,6 +1,1 @@
-export enum BusinessStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  SUSPENDED = 'SUSPENDED',
-}
+export { ShopStatus as BusinessStatus, ShopStatus } from './shop-status.enum';

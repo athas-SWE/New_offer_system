@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsEmail,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -8,9 +10,65 @@ import {
   MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ShopStatus } from '../../../common/enums/shop-status.enum';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
-export class CreateStoreDto {
+export class RegisterShopDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(2)
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  cityId?: string;
+
+  @ApiProperty({ description: 'Owner account name' })
+  @IsString()
+  ownerName: string;
+
+  @ApiProperty()
+  @IsEmail()
+  ownerEmail: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(8)
+  ownerPassword: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  ownerPhone?: string;
+}
+
+export class CreateShopDto {
   @ApiProperty()
   @IsString()
   @MinLength(2)
@@ -33,6 +91,11 @@ export class CreateStoreDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   latitude?: number;
@@ -47,14 +110,9 @@ export class CreateStoreDto {
   @IsOptional()
   @IsUUID()
   cityId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsUUID()
-  businessId?: string;
 }
 
-export class UpdateStoreDto {
+export class UpdateShopDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -74,6 +132,16 @@ export class UpdateStoreDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -98,9 +166,15 @@ export class UpdateStoreDto {
   isActive?: boolean;
 }
 
-export class StoreQueryDto extends PaginationDto {
-  @ApiPropertyOptional()
+export class UpdateShopStatusDto {
+  @ApiProperty({ enum: ShopStatus })
+  @IsEnum(ShopStatus)
+  status: ShopStatus;
+}
+
+export class ShopQueryDto extends PaginationDto {
+  @ApiPropertyOptional({ enum: ShopStatus })
   @IsOptional()
-  @IsUUID()
-  businessId?: string;
+  @IsEnum(ShopStatus)
+  status?: ShopStatus;
 }

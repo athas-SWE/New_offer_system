@@ -72,7 +72,12 @@ export class CreateOfferDto {
   @IsUUID()
   cityId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Shop id (preferred)' })
+  @IsOptional()
+  @IsUUID()
+  shopId?: string;
+
+  @ApiPropertyOptional({ description: 'Alias of shopId' })
   @IsOptional()
   @IsUUID()
   businessId?: string;
@@ -167,7 +172,12 @@ export class OfferQueryDto extends PaginationDto {
   @IsUUID()
   cityId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Shop id (preferred)' })
+  @IsOptional()
+  @IsUUID()
+  shopId?: string;
+
+  @ApiPropertyOptional({ description: 'Alias of shopId' })
   @IsOptional()
   @IsUUID()
   businessId?: string;

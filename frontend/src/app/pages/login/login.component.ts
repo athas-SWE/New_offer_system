@@ -10,9 +10,10 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="page-shell flex min-h-[70vh] items-center justify-center animate-fade-in">
       <div class="w-full max-w-md surface-panel">
+        <img src="images/logo.png" alt="Offer Lanka" class="mx-auto mb-4 h-16 w-auto object-contain" />
         <p class="font-display text-3xl font-semibold text-teal-900">Welcome back</p>
         <p class="mt-2 text-sm text-[var(--color-muted)]">
-          Admin and business owners sign in here. Shoppers can browse offers without an account.
+          Admin and shop owners sign in here. Shoppers can browse offers without an account.
         </p>
 
         <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">

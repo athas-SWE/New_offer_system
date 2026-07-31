@@ -18,8 +18,8 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
       } @else if (!store) {
         <div class="page-shell">
           <div class="surface-panel text-center">
-            <p class="font-display text-2xl text-teal-900">Store not found</p>
-            <a routerLink="/stores" class="btn-primary mt-4">Back to stores</a>
+            <p class="font-display text-2xl text-teal-900">Shop not found</p>
+            <a routerLink="/shops" class="btn-primary mt-4">Back to shops</a>
           </div>
         </div>
       } @else {

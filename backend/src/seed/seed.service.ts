@@ -5,9 +5,9 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../modules/users/entities/role.entity';
 import { User } from '../modules/users/entities/user.entity';
-import { Business } from '../modules/businesses/entities/business.entity';
+import { Shop } from '../modules/shops/entities/shop.entity';
 import { UserRole } from '../common/enums/role.enum';
-import { BusinessStatus } from '../common/enums/business-status.enum';
+import { ShopStatus } from '../common/enums/shop-status.enum';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -18,8 +18,8 @@ export class SeedService implements OnModuleInit {
     private readonly roleRepo: Repository<Role>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-    @InjectRepository(Business)
-    private readonly businessRepo: Repository<Business>,
+    @InjectRepository(Shop)
+    private readonly shopRepo: Repository<Shop>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -29,7 +29,7 @@ export class SeedService implements OnModuleInit {
     try {
       await this.seedRoles();
       await this.seedAdmin();
-      await this.seedBusinessOwner();
+      await this.seedShopOwner();
     } catch (error) {
       this.logger.warn(`Seed skipped/failed: ${(error as Error).message}`);
     }
@@ -38,7 +38,7 @@ export class SeedService implements OnModuleInit {
   private async seedRoles() {
     const roles = [
       { name: UserRole.ADMIN, description: 'Platform administrator' },
-      { name: UserRole.BUSINESS_OWNER, description: 'Business owner' },
+      { name: UserRole.BUSINESS_OWNER, description: 'Shop owner' },
       { name: UserRole.CUSTOMER, description: 'End customer / shopper' },
     ];
 
@@ -100,33 +100,41 @@ export class SeedService implements OnModuleInit {
     });
   }
 
-  private async seedBusinessOwner() {
+  private async seedShopOwner() {
     const owner = await this.ensureUser({
       email: 'business@offerlanka.lk',
       password: 'Business@12345',
-      name: 'Demo Business Owner',
+      name: 'Demo Shop Owner',
       role: UserRole.BUSINESS_OWNER,
     });
     if (!owner) return;
 
-    const existingBiz = await this.businessRepo.findOne({
+    const existing = await this.shopRepo.findOne({
       where: { ownerId: owner.id, isDeleted: false },
     });
-    if (existingBiz) return;
+    if (existing) {
+      if (existing.status !== ShopStatus.APPROVED || !existing.isActive) {
+        existing.status = ShopStatus.APPROVED;
+        existing.isActive = true;
+        await this.shopRepo.save(existing);
+        this.logger.log(`Approved demo shop: ${existing.name}`);
+      }
+      return;
+    }
 
-    await this.businessRepo.save(
-      this.businessRepo.create({
-        name: 'Colombo Demo Store',
-        description: 'Seeded demo business for Offer Lanka business dashboard.',
+    await this.shopRepo.save(
+      this.shopRepo.create({
+        name: 'Colombo Demo Shop',
+        description: 'Seeded demo shop for Offer Lanka shop dashboard.',
         email: 'business@offerlanka.lk',
         phone: '+94771234567',
         address: 'Galle Road, Colombo 03',
-        status: BusinessStatus.APPROVED,
+        status: ShopStatus.APPROVED,
+        isActive: true,
         ownerId: owner.id,
         isDeleted: false,
       }),
     );
-    this.logger.log('Seeded demo business: Colombo Demo Store');
+    this.logger.log('Seeded demo shop: Colombo Demo Shop');
   }
-
 }

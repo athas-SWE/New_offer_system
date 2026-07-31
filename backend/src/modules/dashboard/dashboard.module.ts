@@ -3,9 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DashboardService } from './dashboard.service';
 import { DashboardController } from './dashboard.controller';
 import { User } from '../users/entities/user.entity';
-import { Business } from '../businesses/entities/business.entity';
+import { Shop } from '../shops/entities/shop.entity';
 import { Offer } from '../offers/entities/offer.entity';
-import { Store } from '../stores/entities/store.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { Notification } from '../notifications/entities/notification.entity';
@@ -14,9 +13,8 @@ import { Notification } from '../notifications/entities/notification.entity';
   imports: [
     TypeOrmModule.forFeature([
       User,
-      Business,
+      Shop,
       Offer,
-      Store,
       Review,
       Favorite,
       Notification,

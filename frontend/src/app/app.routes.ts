@@ -22,14 +22,16 @@ export const routes: Routes = [
       import('./pages/categories/categories.component').then((m) => m.CategoriesComponent),
   },
   {
-    path: 'stores',
+    path: 'shops',
     loadComponent: () => import('./pages/stores/stores.component').then((m) => m.StoresComponent),
   },
   {
-    path: 'stores/:id',
+    path: 'shops/:id',
     loadComponent: () =>
       import('./pages/store-details/store-details.component').then((m) => m.StoreDetailsComponent),
   },
+  { path: 'stores', redirectTo: 'shops', pathMatch: 'full' },
+  { path: 'stores/:id', redirectTo: 'shops/:id' },
   {
     path: 'search',
     loadComponent: () => import('./pages/search/search.component').then((m) => m.SearchComponent),

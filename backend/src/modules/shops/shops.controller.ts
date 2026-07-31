@@ -1,0 +1,116 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ShopsService } from './shops.service';
+import {
+  RegisterShopDto,
+  CreateShopDto,
+  UpdateShopDto,
+  UpdateShopStatusDto,
+  ShopQueryDto,
+} from './dto/shop.dto';
+import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/role.enum';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+@ApiTags('Shops')
+@Controller(['shops', 'stores'])
+export class ShopsController {
+  constructor(private readonly shopsService: ShopsService) {}
+
+  @Public()
+  @Get()
+  @ApiOperation({ summary: 'List approved shops (public)' })
+  findPublic(@Query() query: ShopQueryDto) {
+    return this.shopsService.findAll(query, true);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('manage')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'List all shops (admin)' })
+  findManage(@Query() query: ShopQueryDto) {
+    return this.shopsService.findAll(query, false);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('mine')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get my shop(s)' })
+  findMine(@CurrentUser('id') userId: string) {
+    return this.shopsService.findMine(userId);
+  }
+
+  @Public()
+  @Post('register')
+  @ApiOperation({ summary: 'Register a new shop + owner account' })
+  register(@Body() dto: RegisterShopDto) {
+    return this.shopsService.register(dto);
+  }
+
+  @Public()
+  @Get(':id')
+  @ApiOperation({ summary: 'Get shop by id' })
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.shopsService.findOne(id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post()
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiOperation({ summary: 'Create shop' })
+  create(
+    @Body() dto: CreateShopDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.shopsService.create(dto, actorId, role);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiOperation({ summary: 'Update shop' })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateShopDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.shopsService.update(id, dto, actorId, role);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Put(':id/status')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Approve / reject / suspend shop' })
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateShopStatusDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.shopsService.updateStatus(id, dto, actorId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiOperation({ summary: 'Soft delete shop' })
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.shopsService.remove(id, actorId, role);
+  }
+}

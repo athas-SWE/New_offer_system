@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { BaseAuditEntity } from '../../../common/entities/base.entity';
 import { OfferStatus } from '../../../common/enums/offer-status.enum';
-import { Business } from '../../businesses/entities/business.entity';
+import { Shop } from '../../shops/entities/shop.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { City } from '../../locations/entities/city.entity';
 import { OfferImage } from './offer-image.entity';
@@ -61,12 +61,12 @@ export class Offer extends BaseAuditEntity {
   @Column({ type: 'enum', enum: OfferStatus, default: OfferStatus.DRAFT })
   status: OfferStatus;
 
-  @Column({ name: 'business_id', type: 'varchar', length: 36 })
-  businessId: string;
+  @Column({ name: 'shop_id', type: 'varchar', length: 36 })
+  shopId: string;
 
-  @ManyToOne(() => Business, (business) => business.offers)
-  @JoinColumn({ name: 'business_id' })
-  business: Business;
+  @ManyToOne(() => Shop, (shop) => shop.offers)
+  @JoinColumn({ name: 'shop_id' })
+  shop: Shop;
 
   @Column({ name: 'category_id', type: 'varchar', length: 36, nullable: true })
   categoryId: string | null;

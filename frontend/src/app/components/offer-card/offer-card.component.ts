@@ -27,8 +27,14 @@ import { formatLkr } from '../../shared/utils';
           <h3 class="mt-1 font-display text-lg font-semibold text-teal-900">{{ offer.title }}</h3>
           <p class="mt-1 line-clamp-2 text-sm text-[var(--color-muted)]">{{ offer.description }}</p>
           <div class="mt-3 flex items-baseline gap-2">
-            <span class="text-lg font-bold text-teal-800">{{ formatPrice(offer.offerPrice) }}</span>
-            <span class="text-sm text-[var(--color-muted)] line-through">{{ formatPrice(offer.originalPrice) }}</span>
+            @if (offer.offerPrice > 0) {
+              <span class="text-lg font-bold text-teal-800">{{ formatPrice(offer.offerPrice) }}</span>
+              @if (offer.originalPrice > 0) {
+                <span class="text-sm text-[var(--color-muted)] line-through">{{ formatPrice(offer.originalPrice) }}</span>
+              }
+            } @else {
+              <span class="text-lg font-bold text-teal-800">{{ offer.discountPercent }}% off</span>
+            }
           </div>
         </div>
       </a>

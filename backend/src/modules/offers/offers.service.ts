@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Offer } from './entities/offer.entity';
 import { OfferImage } from './entities/offer-image.entity';
-import { Business } from '../businesses/entities/business.entity';
+import { Shop } from '../shops/entities/shop.entity';
 import { CreateOfferDto, UpdateOfferDto, OfferQueryDto } from './dto/offer.dto';
 import { OfferStatus } from '../../common/enums/offer-status.enum';
 import { UserRole } from '../../common/enums/role.enum';
@@ -23,22 +23,23 @@ export class OffersService {
     private readonly offerRepo: Repository<Offer>,
     @InjectRepository(OfferImage)
     private readonly offerImageRepo: Repository<OfferImage>,
-    @InjectRepository(Business)
-    private readonly businessRepo: Repository<Business>,
+    @InjectRepository(Shop)
+    private readonly shopRepo: Repository<Shop>,
     @InjectRepository(Analytics)
     private readonly analyticsRepo: Repository<Analytics>,
   ) {}
 
   async create(dto: CreateOfferDto, actorId: string, role: string) {
-    let businessId = dto.businessId;
+    let shopId = dto.shopId || dto.businessId;
     if (role === UserRole.BUSINESS_OWNER) {
-      const business = await this.businessRepo.findOne({
+      const shop = await this.shopRepo.findOne({
         where: { ownerId: actorId, isDeleted: false },
+        order: { createdDate: 'ASC' },
       });
-      if (!business) throw new BadRequestException('No business linked to this account');
-      businessId = business.id;
+      if (!shop) throw new BadRequestException('No shop linked to this account');
+      shopId = shop.id;
     }
-    if (!businessId) throw new BadRequestException('businessId is required');
+    if (!shopId) throw new BadRequestException('shopId is required');
 
     const offer = this.offerRepo.create({
       title: dto.title,
@@ -52,7 +53,7 @@ export class OffersService {
       longitude: dto.longitude ?? null,
       categoryId: dto.categoryId || null,
       cityId: dto.cityId || null,
-      businessId,
+      shopId,
       status: dto.status || OfferStatus.DRAFT,
       qrCode: `OFFER-${uuidv4()}`,
       views: 0,
@@ -74,7 +75,7 @@ export class OffersService {
     const limit = query.limit || 20;
     const qb = this.offerRepo
       .createQueryBuilder('offer')
-      .leftJoinAndSelect('offer.business', 'business')
+      .leftJoinAndSelect('offer.shop', 'shop')
       .leftJoinAndSelect('offer.category', 'category')
       .leftJoinAndSelect('offer.city', 'city')
       .leftJoinAndSelect('offer.images', 'images')
@@ -87,14 +88,15 @@ export class OffersService {
     }
 
     if (!publicOnly && actor?.role === UserRole.BUSINESS_OWNER) {
-      const business = await this.businessRepo.findOne({
+      const shops = await this.shopRepo.find({
         where: { ownerId: actor.id, isDeleted: false },
+        select: ['id'],
       });
-      if (!business) {
+      if (!shops.length) {
         return paginate([], 0, page, limit);
       }
-      qb.andWhere('offer.businessId = :ownerBusinessId', {
-        ownerBusinessId: business.id,
+      qb.andWhere('offer.shopId IN (:...shopIds)', {
+        shopIds: shops.map((s) => s.id),
       });
     }
 
@@ -109,8 +111,9 @@ export class OffersService {
     if (query.cityId) {
       qb.andWhere('offer.cityId = :cityId', { cityId: query.cityId });
     }
-    if (query.businessId) {
-      qb.andWhere('offer.businessId = :businessId', { businessId: query.businessId });
+    const shopFilter = query.shopId || query.businessId;
+    if (shopFilter) {
+      qb.andWhere('offer.shopId = :shopId', { shopId: shopFilter });
     }
 
     qb.orderBy('offer.createdDate', 'DESC')
@@ -124,7 +127,7 @@ export class OffersService {
   async findOne(id: string) {
     const offer = await this.offerRepo.findOne({
       where: { id, isDeleted: false },
-      relations: ['business', 'category', 'city', 'images'],
+      relations: ['shop', 'category', 'city', 'images'],
     });
     if (!offer) throw new NotFoundException('Offer not found');
     return offer;
@@ -140,7 +143,7 @@ export class OffersService {
         entityType: 'offer',
         entityId: id,
         userId: userId || null,
-        businessId: offer.businessId,
+        businessId: offer.shopId,
         isDeleted: false,
       }),
     );
@@ -197,10 +200,10 @@ export class OffersService {
 
   private async assertOwnership(offer: Offer, actorId: string, role: string) {
     if (role === UserRole.ADMIN) return;
-    const business = await this.businessRepo.findOne({
-      where: { id: offer.businessId, isDeleted: false },
+    const shop = await this.shopRepo.findOne({
+      where: { id: offer.shopId, isDeleted: false },
     });
-    if (!business || business.ownerId !== actorId) {
+    if (!shop || shop.ownerId !== actorId) {
       throw new ForbiddenException('Not allowed to modify this offer');
     }
   }

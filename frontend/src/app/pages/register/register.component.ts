@@ -10,9 +10,10 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="page-shell flex min-h-[70vh] items-center justify-center animate-fade-in">
       <div class="w-full max-w-md surface-panel">
-        <p class="font-display text-3xl font-semibold text-teal-900">List your business</p>
+        <img src="images/logo.png" alt="Offer Lanka" class="mx-auto mb-4 h-16 w-auto object-contain" />
+        <p class="font-display text-3xl font-semibold text-teal-900">List your shop</p>
         <p class="mt-2 text-sm text-[var(--color-muted)]">
-          Create a business owner account to publish offers on Offer Lanka. Shoppers can browse without logging in.
+          Create a shop owner account to publish offers on Offer Lanka. Shoppers can browse without logging in.
         </p>
 
         <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
@@ -38,7 +39,7 @@ import { AuthService } from '../../services/auth.service';
           }
 
           <button type="submit" class="btn-primary w-full" [disabled]="form.invalid || loading">
-            {{ loading ? 'Creating…' : 'Create business account' }}
+            {{ loading ? 'Creating…' : 'Create shop account' }}
           </button>
         </form>
 

@@ -82,8 +82,7 @@ model City {
   updatedDate DateTime   @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
   isDeleted   Boolean    @default(false) @map("is_deleted")
   district    District   @relation(fields: [districtId], references: [id])
-  businesses  Business[]
-  stores      Store[]
+  shops       Shop[]
   offers      Offer[]
 
   @@map("cities")
@@ -106,7 +105,7 @@ model User {
   updatedDate      DateTime       @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
   isDeleted        Boolean        @default(false) @map("is_deleted")
   role             Role           @relation(fields: [roleId], references: [id])
-  business         Business?
+  shops            Shop[]
   favorites        Favorite[]
   notifications    Notification[]
   reviews          Review[]
@@ -114,7 +113,7 @@ model User {
   @@map("users")
 }
 
-model Business {
+model Shop {
   id                 String         @id @default(uuid()) @db.Char(36)
   name               String         @db.VarChar(200)
   description        String?        @db.Text
@@ -124,7 +123,10 @@ model Business {
   address            String?        @db.VarChar(500)
   logoUrl            String?        @map("logo_url") @db.VarChar(500)
   status             BusinessStatus @default(PENDING)
-  ownerId            String         @unique @map("owner_id") @db.Char(36)
+  isActive           Boolean        @default(true) @map("is_active")
+  latitude           Decimal?       @db.Decimal(10, 7)
+  longitude          Decimal?       @db.Decimal(10, 7)
+  ownerId            String         @map("owner_id") @db.Char(36)
   cityId             String?        @map("city_id") @db.Char(36)
   createdBy          String?        @map("created_by") @db.VarChar(36)
   updatedBy          String?        @map("updated_by") @db.VarChar(36)
@@ -133,32 +135,9 @@ model Business {
   isDeleted          Boolean        @default(false) @map("is_deleted")
   owner              User           @relation(fields: [ownerId], references: [id])
   city               City?          @relation(fields: [cityId], references: [id])
-  stores             Store[]
   offers             Offer[]
 
-  @@map("businesses")
-}
-
-model Store {
-  id          String    @id @default(uuid()) @db.Char(36)
-  name        String    @db.VarChar(200)
-  description String?   @db.Text
-  address     String?   @db.VarChar(500)
-  phone       String?   @db.VarChar(30)
-  latitude    Decimal?  @db.Decimal(10, 7)
-  longitude   Decimal?  @db.Decimal(10, 7)
-  isActive    Boolean   @default(true) @map("is_active")
-  businessId  String    @map("business_id") @db.Char(36)
-  cityId      String?   @map("city_id") @db.Char(36)
-  createdBy   String?   @map("created_by") @db.VarChar(36)
-  updatedBy   String?   @map("updated_by") @db.VarChar(36)
-  createdDate DateTime  @default(now()) @map("created_date") @db.DateTime(6)
-  updatedDate DateTime  @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
-  isDeleted   Boolean   @default(false) @map("is_deleted")
-  business    Business  @relation(fields: [businessId], references: [id])
-  city        City?     @relation(fields: [cityId], references: [id])
-
-  @@map("stores")
+  @@map("shops")
 }
 
 model Category {
@@ -197,7 +176,7 @@ model Offer {
   views           Int           @default(0)
   likes           Int           @default(0)
   status          OfferStatus   @default(DRAFT)
-  businessId      String        @map("business_id") @db.Char(36)
+  shopId          String        @map("shop_id") @db.Char(36)
   categoryId      String?       @map("category_id") @db.Char(36)
   cityId          String?       @map("city_id") @db.Char(36)
   createdBy       String?       @map("created_by") @db.VarChar(36)
@@ -205,7 +184,7 @@ model Offer {
   createdDate     DateTime      @default(now()) @map("created_date") @db.DateTime(6)
   updatedDate     DateTime      @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
   isDeleted       Boolean       @default(false) @map("is_deleted")
-  business        Business      @relation(fields: [businessId], references: [id])
+  shop            Shop          @relation(fields: [shopId], references: [id])
   category        Category?     @relation(fields: [categoryId], references: [id])
   city            City?         @relation(fields: [cityId], references: [id])
   images          OfferImage[]
@@ -316,4 +295,22 @@ model AuditLog {
   isDeleted   Boolean  @default(false) @map("is_deleted")
 
   @@map("audit_logs")
+}
+
+model HeroSlide {
+  id          String   @id @default(uuid()) @db.Char(36)
+  title       String   @db.VarChar(200)
+  subtitle    String?  @db.VarChar(500)
+  imageUrl    String   @map("image_url") @db.VarChar(700)
+  ctaLabel    String?  @map("cta_label") @db.VarChar(80)
+  ctaLink     String?  @map("cta_link") @db.VarChar(300)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  @@map("hero_slides")
 }

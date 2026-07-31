@@ -18,8 +18,8 @@ type Tab = 'overview' | 'stores' | 'offers';
     <div class="page-shell animate-fade-in">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="section-title">Business dashboard</h1>
-          <p class="section-sub">Manage your store, publish offers, and track performance.</p>
+          <h1 class="section-title">Shop dashboard</h1>
+          <p class="section-sub">Manage your shop, publish offers, and track performance.</p>
         </div>
         <a routerLink="/offers" class="btn-secondary">
           <mat-icon>storefront</mat-icon>
@@ -51,7 +51,7 @@ type Tab = 'overview' | 'stores' | 'offers';
         @if (business) {
           <div class="mt-6 surface-panel flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-teal-600">My business</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-teal-600">My shop</p>
               <h2 class="font-display text-2xl font-semibold text-teal-900">{{ business.name }}</h2>
               <p class="text-sm text-[var(--color-muted)]">{{ business.address || 'No address set' }}</p>
             </div>
@@ -59,8 +59,7 @@ type Tab = 'overview' | 'stores' | 'offers';
           </div>
         } @else {
           <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            No business is linked to this account yet. Use Swagger
-            <code>POST /api/businesses/register</code> or ask admin to link one.
+            No shop is linked to this account yet. Ask admin to approve your shop registration.
           </div>
         }
 
@@ -110,9 +109,9 @@ type Tab = 'overview' | 'stores' | 'offers';
         @if (activeTab === 'stores') {
           <div class="mt-8 grid gap-6 lg:grid-cols-2">
             <form class="surface-panel space-y-4" [formGroup]="storeForm" (ngSubmit)="createStore()">
-              <h2 class="font-display text-xl font-semibold text-teal-900">Add store</h2>
+              <h2 class="font-display text-xl font-semibold text-teal-900">Add shop location</h2>
               <div>
-                <label class="mb-1 block text-sm font-medium" for="storeName">Store name</label>
+                <label class="mb-1 block text-sm font-medium" for="storeName">Shop name</label>
                 <input id="storeName" class="input-field" formControlName="name" placeholder="Galle Face Branch" />
               </div>
               <div>
@@ -134,14 +133,14 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <p class="text-sm text-red-700">{{ storeError }}</p>
               }
               <button type="submit" class="btn-primary" [disabled]="storeForm.invalid || savingStore">
-                {{ savingStore ? 'Saving…' : 'Create store' }}
+                {{ savingStore ? 'Saving…' : 'Create shop' }}
               </button>
             </form>
 
             <div class="surface-panel">
-              <h2 class="font-display text-xl font-semibold text-teal-900">Your stores</h2>
+              <h2 class="font-display text-xl font-semibold text-teal-900">Your shops</h2>
               @if (!business?.stores?.length) {
-                <p class="mt-4 text-sm text-[var(--color-muted)]">No stores yet.</p>
+                <p class="mt-4 text-sm text-[var(--color-muted)]">No shops yet.</p>
               } @else {
                 <ul class="mt-4 space-y-3">
                   @for (store of business?.stores; track store.id) {
@@ -262,7 +261,7 @@ export class BusinessDashboardComponent implements OnInit {
   activeTab: Tab = 'overview';
   tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'stores', label: 'Stores' },
+    { id: 'stores', label: 'Shops' },
     { id: 'offers', label: 'Offers' },
   ];
 
@@ -314,14 +313,14 @@ export class BusinessDashboardComponent implements OnInit {
           { label: 'Active', value: String(stats.activeOffers) },
           { label: 'Views', value: String(stats.totalViews) },
           { label: 'Favourites', value: String(stats.favorites) },
-          { label: 'Stores', value: String(stats.stores ?? 0) },
+          { label: 'Shops', value: String(stats.stores ?? 0) },
           { label: 'Likes', value: String(stats.likes ?? 0) },
           { label: 'Reviews', value: String(stats.reviews ?? 0) },
         ];
         this.loading = false;
       },
       error: () => {
-        this.error = 'Could not load business dashboard. Please log in as BUSINESS_OWNER.';
+        this.error = 'Could not load shop dashboard. Please log in as a shop owner.';
         this.loading = false;
       },
     });
@@ -349,7 +348,7 @@ export class BusinessDashboardComponent implements OnInit {
     this.businessApi.createStore(this.storeForm.getRawValue()).subscribe({
       next: () => {
         this.savingStore = false;
-        this.storeMessage = 'Store created.';
+        this.storeMessage = 'Shop created.';
         this.storeForm.reset({ name: '', address: '', phone: '', description: '' });
         this.reloadAll();
       },

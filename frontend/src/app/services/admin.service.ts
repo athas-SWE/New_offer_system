@@ -34,6 +34,17 @@ export interface AdminCategory {
   isActive?: boolean;
 }
 
+export interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  ctaLabel?: string | null;
+  ctaLink?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
 interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; limit: number; totalPages: number };
@@ -45,12 +56,12 @@ export class AdminService {
 
   getBusinesses(status?: string): Observable<AdminBusiness[]> {
     return this.api
-      .get<Paginated<AdminBusiness>>('/businesses', { status, limit: 50 })
+      .get<Paginated<AdminBusiness>>('/shops/manage', { status, limit: 50 })
       .pipe(map((res) => res.data || []));
   }
 
   updateBusinessStatus(id: string, status: string): Observable<AdminBusiness> {
-    return this.api.put<AdminBusiness>(`/businesses/${id}/status`, { status });
+    return this.api.put<AdminBusiness>(`/shops/${id}/status`, { status });
   }
 
   getManagedOffers(status?: string): Observable<DashboardOfferRow[]> {
@@ -104,5 +115,40 @@ export class AdminService {
 
   deleteCategory(id: string): Observable<unknown> {
     return this.api.delete(`/categories/${id}`);
+  }
+
+  getHeroSlides(): Observable<HeroSlide[]> {
+    return this.api.get<HeroSlide[]>('/hero-slides/manage');
+  }
+
+  createHeroSlide(payload: {
+    title: string;
+    subtitle?: string;
+    imageUrl: string;
+    ctaLabel?: string;
+    ctaLink?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  }): Observable<HeroSlide> {
+    return this.api.post<HeroSlide>('/hero-slides', payload);
+  }
+
+  updateHeroSlide(
+    id: string,
+    payload: Partial<{
+      title: string;
+      subtitle: string;
+      imageUrl: string;
+      ctaLabel: string;
+      ctaLink: string;
+      sortOrder: number;
+      isActive: boolean;
+    }>
+  ): Observable<HeroSlide> {
+    return this.api.put<HeroSlide>(`/hero-slides/${id}`, payload);
+  }
+
+  deleteHeroSlide(id: string): Observable<unknown> {
+    return this.api.delete(`/hero-slides/${id}`);
   }
 }

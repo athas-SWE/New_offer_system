@@ -14,10 +14,10 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
   template: `
     <div class="page-shell animate-fade-in">
       <h1 class="section-title">All offers</h1>
-      <p class="section-sub">Search and filter deals from stores across Sri Lanka.</p>
+      <p class="section-sub">Search and filter deals from shops across Sri Lanka.</p>
 
       <div class="mt-8 grid gap-3 rounded-2xl border border-teal-100 bg-white/90 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-        <input class="input-field" [(ngModel)]="filter.search" (ngModelChange)="apply()" placeholder="Search offers, stores, cities…" />
+        <input class="input-field" [(ngModel)]="filter.search" (ngModelChange)="apply()" placeholder="Search offers, shops, cities…" />
         <select class="input-field" [(ngModel)]="filter.categoryId" (ngModelChange)="apply()">
           <option value="">All categories</option>
           @for (cat of categories; track cat.id) {

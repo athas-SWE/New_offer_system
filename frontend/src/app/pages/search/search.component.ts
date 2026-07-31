@@ -15,7 +15,7 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
   template: `
     <div class="page-shell animate-fade-in">
       <h1 class="section-title">Search</h1>
-      <p class="section-sub">Find offers and stores across Sri Lanka.</p>
+      <p class="section-sub">Find offers and shops across Sri Lanka.</p>
 
       <div class="mt-6 flex flex-col gap-3 sm:flex-row">
         <div class="relative flex-1">
@@ -55,13 +55,13 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
         </div>
 
         <div class="mt-12">
-          <h2 class="font-display text-2xl font-semibold text-teal-900">Stores ({{ stores.length }})</h2>
+          <h2 class="font-display text-2xl font-semibold text-teal-900">Shops ({{ stores.length }})</h2>
           @if (!stores.length) {
-            <p class="mt-3 text-sm text-[var(--color-muted)]">No matching stores.</p>
+            <p class="mt-3 text-sm text-[var(--color-muted)]">No matching shops.</p>
           } @else {
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
               @for (store of stores; track store.id) {
-                <a [routerLink]="['/stores', store.id]" class="surface-panel flex items-center gap-3 transition hover:shadow-lift">
+                <a [routerLink]="['/shops', store.id]" class="surface-panel flex items-center gap-3 transition hover:shadow-lift">
                   <img [src]="store.logoUrl" [alt]="store.name" class="h-12 w-12 rounded-xl object-cover" />
                   <div>
                     <p class="font-semibold text-teal-900">{{ store.name }}</p>

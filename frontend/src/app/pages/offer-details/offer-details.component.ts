@@ -31,16 +31,20 @@ import { formatDate, formatLkr } from '../../shared/utils';
             <p class="mt-4 text-[var(--color-muted)]">{{ offer.description }}</p>
 
             <div class="mt-6 flex flex-wrap items-end gap-3">
-              <span class="text-3xl font-bold text-teal-800">{{ price(offer.offerPrice) }}</span>
-              <span class="text-lg text-[var(--color-muted)] line-through">{{ price(offer.originalPrice) }}</span>
+              @if (offer.offerPrice > 0) {
+                <span class="text-3xl font-bold text-teal-800">{{ price(offer.offerPrice) }}</span>
+                @if (offer.originalPrice > 0) {
+                  <span class="text-lg text-[var(--color-muted)] line-through">{{ price(offer.originalPrice) }}</span>
+                }
+              }
               <span class="rounded-full bg-gold-500 px-3 py-1 text-sm font-bold text-teal-900">-{{ offer.discountPercent }}%</span>
             </div>
 
             <dl class="mt-6 grid gap-3 text-sm sm:grid-cols-2">
               <div class="surface-panel !p-3">
-                <dt class="text-[var(--color-muted)]">Store</dt>
+                <dt class="text-[var(--color-muted)]">Shop</dt>
                 <dd class="mt-1 font-semibold text-teal-900">
-                  <a [routerLink]="['/stores', offer.storeId]" class="hover:underline">{{ offer.storeName }}</a>
+                  <a [routerLink]="['/shops', offer.storeId]" class="hover:underline">{{ offer.storeName }}</a>
                 </dd>
               </div>
               <div class="surface-panel !p-3">
@@ -60,7 +64,7 @@ import { formatDate, formatLkr } from '../../shared/utils';
             <div class="mt-8 flex flex-wrap gap-3">
               <a routerLink="/offers" class="btn-primary">Browse more offers</a>
               @if (offer.storeId) {
-                <a [routerLink]="['/stores', offer.storeId]" class="btn-secondary">View store</a>
+                <a [routerLink]="['/shops', offer.storeId]" class="btn-secondary">View shop</a>
               }
             </div>
           </div>

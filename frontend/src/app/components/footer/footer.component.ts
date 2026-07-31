@@ -9,7 +9,9 @@ import { RouterLink } from '@angular/router';
     <footer class="mt-auto border-t border-teal-100 bg-teal-900 text-teal-50">
       <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
         <div>
-          <p class="font-display text-2xl font-semibold text-white">Offer Lanka</p>
+          <div class="inline-flex rounded-2xl bg-white px-3 py-2">
+            <img src="images/logo.png" alt="Offer Lanka" class="h-14 w-auto object-contain" />
+          </div>
           <p class="mt-3 text-sm text-teal-100/80">
             Sri Lanka's marketplace for everyday deals — from Colombo cafés to hill-country stays.
           </p>
@@ -19,7 +21,7 @@ import { RouterLink } from '@angular/router';
           <div class="mt-3 flex flex-col gap-2 text-sm">
             <a routerLink="/offers" class="hover:text-gold-400">Offers</a>
             <a routerLink="/categories" class="hover:text-gold-400">Categories</a>
-            <a routerLink="/stores" class="hover:text-gold-400">Stores</a>
+            <a routerLink="/shops" class="hover:text-gold-400">Shops</a>
             <a routerLink="/search" class="hover:text-gold-400">Search</a>
           </div>
         </div>
@@ -28,7 +30,7 @@ import { RouterLink } from '@angular/router';
           <div class="mt-3 flex flex-col gap-2 text-sm">
             <a routerLink="/about" class="hover:text-gold-400">About</a>
             <a routerLink="/contact" class="hover:text-gold-400">Contact</a>
-            <a routerLink="/register" class="hover:text-gold-400">List your business</a>
+            <a routerLink="/register" class="hover:text-gold-400">List your shop</a>
           </div>
         </div>
         <div>

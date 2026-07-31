@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
-import { Business } from '../businesses/entities/business.entity';
+import { Shop } from '../shops/entities/shop.entity';
 import { Offer } from '../offers/entities/offer.entity';
-import { Store } from '../stores/entities/store.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { OfferStatus } from '../../common/enums/offer-status.enum';
-import { BusinessStatus } from '../../common/enums/business-status.enum';
+import { ShopStatus } from '../../common/enums/shop-status.enum';
 import { UserRole } from '../../common/enums/role.enum';
 
 export interface DashboardOfferRowDto {
@@ -27,10 +26,8 @@ export interface DashboardOfferRowDto {
 export class DashboardService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-    @InjectRepository(Business)
-    private readonly businessRepo: Repository<Business>,
+    @InjectRepository(Shop) private readonly shopRepo: Repository<Shop>,
     @InjectRepository(Offer) private readonly offerRepo: Repository<Offer>,
-    @InjectRepository(Store) private readonly storeRepo: Repository<Store>,
     @InjectRepository(Review) private readonly reviewRepo: Repository<Review>,
     @InjectRepository(Favorite)
     private readonly favoriteRepo: Repository<Favorite>,
@@ -79,21 +76,20 @@ export class DashboardService {
   async getAdminDashboard() {
     const [
       totalUsers,
-      totalBusinesses,
-      pendingBusinesses,
+      totalShops,
+      pendingShops,
       totalOffers,
       activeOffers,
       pendingOffers,
       expiredOffers,
-      totalStores,
       totalReviews,
       totalFavorites,
       totalViews,
     ] = await Promise.all([
       this.userRepo.count({ where: { isDeleted: false } }),
-      this.businessRepo.count({ where: { isDeleted: false } }),
-      this.businessRepo.count({
-        where: { isDeleted: false, status: BusinessStatus.PENDING },
+      this.shopRepo.count({ where: { isDeleted: false } }),
+      this.shopRepo.count({
+        where: { isDeleted: false, status: ShopStatus.PENDING },
       }),
       this.offerRepo.count({ where: { isDeleted: false } }),
       this.offerRepo.count({
@@ -105,7 +101,6 @@ export class DashboardService {
       this.offerRepo.count({
         where: { isDeleted: false, status: OfferStatus.EXPIRED },
       }),
-      this.storeRepo.count({ where: { isDeleted: false } }),
       this.reviewRepo.count({ where: { isDeleted: false } }),
       this.favoriteRepo.count({ where: { isDeleted: false } }),
       this.offerRepo
@@ -124,20 +119,20 @@ export class DashboardService {
       pendingOffers,
       totalViews,
       favorites: totalFavorites,
-      stores: totalStores,
+      stores: totalShops,
       users: totalUsers,
-      businesses: totalBusinesses,
-      pendingBusinesses,
+      businesses: totalShops,
+      pendingBusinesses: pendingShops,
       reviews: totalReviews,
       totals: {
         users: totalUsers,
-        businesses: totalBusinesses,
-        pendingBusinesses,
+        businesses: totalShops,
+        pendingBusinesses: pendingShops,
         offers: totalOffers,
         activeOffers,
         pendingOffers,
         expiredOffers,
-        stores: totalStores,
+        stores: totalShops,
         reviews: totalReviews,
         favorites: totalFavorites,
         views: totalViews,
@@ -148,22 +143,22 @@ export class DashboardService {
   async getAdminRecentOffers(): Promise<DashboardOfferRowDto[]> {
     const recentOffers = await this.offerRepo.find({
       where: { isDeleted: false },
-      relations: ['business'],
+      relations: ['shop'],
       order: { createdDate: 'DESC' },
       take: 10,
     });
     const savesMap = await this.countSavesForOffers(recentOffers.map((o) => o.id));
     return recentOffers.map((o) =>
-      this.mapOfferRow(o, savesMap.get(o.id) || 0, o.business?.name),
+      this.mapOfferRow(o, savesMap.get(o.id) || 0, o.shop?.name),
     );
   }
 
   async getBusinessDashboard(ownerId: string) {
-    const business = await this.businessRepo.findOne({
+    const shops = await this.shopRepo.find({
       where: { ownerId, isDeleted: false },
     });
 
-    if (!business) {
+    if (!shops.length) {
       return {
         role: UserRole.BUSINESS_OWNER,
         business: null,
@@ -184,68 +179,66 @@ export class DashboardService {
           favorites: 0,
           likes: 0,
         },
-        message: 'No business registered yet. Register a business to see analytics.',
+        message: 'No shop registered yet. Create a shop to see analytics.',
       };
     }
 
-    const [totalOffers, activeOffers, totalStores, totalReviews, totalViews, totalLikes, favorites] =
+    const shopIds = shops.map((s) => s.id);
+    const [totalOffers, activeOffers, totalReviews, totalViews, totalLikes, favorites] =
       await Promise.all([
         this.offerRepo.count({
-          where: { businessId: business.id, isDeleted: false },
+          where: { shopId: In(shopIds), isDeleted: false },
         }),
         this.offerRepo.count({
           where: {
-            businessId: business.id,
+            shopId: In(shopIds),
             isDeleted: false,
             status: OfferStatus.ACTIVE,
           },
         }),
-        this.storeRepo.count({
-          where: { businessId: business.id, isDeleted: false },
-        }),
         this.reviewRepo
           .createQueryBuilder('r')
           .innerJoin('r.offer', 'o')
-          .where('o.business_id = :businessId', { businessId: business.id })
+          .where('o.shop_id IN (:...shopIds)', { shopIds })
           .andWhere('r.is_deleted = false')
           .getCount(),
         this.offerRepo
           .createQueryBuilder('o')
           .select('COALESCE(SUM(o.views), 0)', 'sum')
-          .where('o.business_id = :businessId', { businessId: business.id })
+          .where('o.shop_id IN (:...shopIds)', { shopIds })
           .andWhere('o.is_deleted = false')
           .getRawOne()
           .then((r) => Number(r?.sum || 0)),
         this.offerRepo
           .createQueryBuilder('o')
           .select('COALESCE(SUM(o.likes), 0)', 'sum')
-          .where('o.business_id = :businessId', { businessId: business.id })
+          .where('o.shop_id IN (:...shopIds)', { shopIds })
           .andWhere('o.is_deleted = false')
           .getRawOne()
           .then((r) => Number(r?.sum || 0)),
         this.favoriteRepo
           .createQueryBuilder('f')
           .innerJoin('f.offer', 'o')
-          .where('o.business_id = :businessId', { businessId: business.id })
+          .where('o.shop_id IN (:...shopIds)', { shopIds })
           .andWhere('f.is_deleted = false')
           .getCount(),
       ]);
 
     return {
       role: UserRole.BUSINESS_OWNER,
-      business,
+      business: shops[0],
       totalOffers,
       activeOffers,
       totalViews,
       favorites,
       likes: totalLikes,
       revenue: 0,
-      stores: totalStores,
+      stores: shops.length,
       reviews: totalReviews,
       totals: {
         offers: totalOffers,
         activeOffers,
-        stores: totalStores,
+        stores: shops.length,
         reviews: totalReviews,
         views: totalViews,
         favorites,
@@ -255,13 +248,14 @@ export class DashboardService {
   }
 
   async getBusinessOffers(ownerId: string): Promise<DashboardOfferRowDto[]> {
-    const business = await this.businessRepo.findOne({
+    const shops = await this.shopRepo.find({
       where: { ownerId, isDeleted: false },
+      select: ['id'],
     });
-    if (!business) return [];
+    if (!shops.length) return [];
 
     const offers = await this.offerRepo.find({
-      where: { businessId: business.id, isDeleted: false },
+      where: { shopId: In(shops.map((s) => s.id)), isDeleted: false },
       order: { createdDate: 'DESC' },
       take: 50,
     });
@@ -284,7 +278,7 @@ export class DashboardService {
 
     const recentFavorites = await this.favoriteRepo.find({
       where: { userId, isDeleted: false },
-      relations: ['offer', 'offer.business'],
+      relations: ['offer', 'offer.shop'],
       order: { createdDate: 'DESC' },
       take: 8,
     });
@@ -310,13 +304,7 @@ export class DashboardService {
       reviews,
       recentFavorites: recentFavorites
         .filter((f) => f.offer && !f.offer.isDeleted)
-        .map((f) =>
-          this.mapOfferRow(
-            f.offer,
-            0,
-            f.offer.business?.name,
-          ),
-        ),
+        .map((f) => this.mapOfferRow(f.offer, 0, f.offer.shop?.name)),
       endingSoon: endingSoon.map((o) =>
         this.mapOfferRow(o, savesMap.get(o.id) || 0),
       ),

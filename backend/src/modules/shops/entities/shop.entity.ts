@@ -1,13 +1,12 @@
-import { Entity, Column, OneToOne, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseAuditEntity } from '../../../common/entities/base.entity';
-import { BusinessStatus } from '../../../common/enums/business-status.enum';
+import { ShopStatus } from '../../../common/enums/shop-status.enum';
 import { User } from '../../users/entities/user.entity';
-import { Store } from '../../stores/entities/store.entity';
-import { Offer } from '../../offers/entities/offer.entity';
 import { City } from '../../locations/entities/city.entity';
+import { Offer } from '../../offers/entities/offer.entity';
 
-@Entity('businesses')
-export class Business extends BaseAuditEntity {
+@Entity('shops')
+export class Shop extends BaseAuditEntity {
   @Column({ type: 'varchar', length: 200 })
   name: string;
 
@@ -29,13 +28,22 @@ export class Business extends BaseAuditEntity {
   @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
   logoUrl: string | null;
 
-  @Column({ type: 'enum', enum: BusinessStatus, default: BusinessStatus.PENDING })
-  status: BusinessStatus;
+  @Column({ type: 'enum', enum: ShopStatus, default: ShopStatus.PENDING })
+  status: ShopStatus;
 
-  @Column({ name: 'owner_id', type: 'varchar', length: 36, unique: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  latitude: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  longitude: number | null;
+
+  @Column({ name: 'owner_id', type: 'varchar', length: 36 })
   ownerId: string;
 
-  @OneToOne(() => User, (user) => user.business)
+  @ManyToOne(() => User, (user) => user.shops)
   @JoinColumn({ name: 'owner_id' })
   owner: User;
 
@@ -46,9 +54,6 @@ export class Business extends BaseAuditEntity {
   @JoinColumn({ name: 'city_id' })
   city: City | null;
 
-  @OneToMany(() => Store, (store) => store.business)
-  stores: Store[];
-
-  @OneToMany(() => Offer, (offer) => offer.business)
+  @OneToMany(() => Offer, (offer) => offer.shop)
   offers: Offer[];
 }

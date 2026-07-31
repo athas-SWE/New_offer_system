@@ -92,8 +92,7 @@ async function bootstrap() {
       )
       .addTag('Auth', 'Register, login, refresh, logout')
       .addTag('Users', 'User management')
-      .addTag('Businesses', 'Business registration and approval')
-      .addTag('Stores', 'Store CRUD')
+      .addTag('Shops', 'Shop CRUD, registration and approval')
       .addTag('Offers', 'Offer CRUD, images, search')
       .addTag('Categories', 'Offer categories')
       .addTag('Locations', 'Cities and districts')
@@ -101,8 +100,9 @@ async function bootstrap() {
       .addTag('Reviews', 'Offer reviews')
       .addTag('Notifications', 'In-app notifications')
       .addTag('Analytics', 'Event tracking')
-      .addTag('Dashboard', 'Admin and business metrics')
+      .addTag('Dashboard', 'Admin and shop metrics')
       .addTag('Reports', 'PDF / Excel exports')
+      .addTag('Hero Slides', 'Home page hero slideshow')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig, {

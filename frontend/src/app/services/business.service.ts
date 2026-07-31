@@ -13,6 +13,7 @@ export interface BusinessProfile {
   address?: string | null;
   logoUrl?: string | null;
   stores?: Array<{ id: string; name: string; address?: string | null; phone?: string | null }>;
+  shops?: Array<{ id: string; name: string; address?: string | null; phone?: string | null }>;
 }
 
 export interface CreateStorePayload {
@@ -42,11 +43,16 @@ export class BusinessService {
   private readonly api = inject(ApiService);
 
   getMine(): Observable<BusinessProfile> {
-    return this.api.get<BusinessProfile>('/businesses/mine');
+    return this.api.get<BusinessProfile>('/shops/mine').pipe(
+      map((shop) => ({
+        ...shop,
+        stores: shop.shops || shop.stores || [],
+      }))
+    );
   }
 
   createStore(payload: CreateStorePayload): Observable<unknown> {
-    return this.api.post('/stores', payload);
+    return this.api.post('/shops', payload);
   }
 
   createOffer(payload: CreateOfferPayload): Observable<{ id: string; title: string; status: string }> {

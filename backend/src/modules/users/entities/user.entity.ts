@@ -1,7 +1,7 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseAuditEntity } from '../../../common/entities/base.entity';
 import { Role } from './role.entity';
-import { Business } from '../../businesses/entities/business.entity';
+import { Shop } from '../../shops/entities/shop.entity';
 import { Favorite } from '../../favorites/entities/favorite.entity';
 import { Notification } from '../../notifications/entities/notification.entity';
 import { Review } from '../../reviews/entities/review.entity';
@@ -39,8 +39,8 @@ export class User extends BaseAuditEntity {
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  @OneToOne(() => Business, (business) => business.owner)
-  business: Business;
+  @OneToMany(() => Shop, (shop) => shop.owner)
+  shops: Shop[];
 
   @OneToMany(() => Favorite, (favorite) => favorite.user)
   favorites: Favorite[];

@@ -8,8 +8,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { BusinessesModule } from './modules/businesses/businesses.module';
-import { StoresModule } from './modules/stores/stores.module';
+import { ShopsModule } from './modules/shops/shops.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
@@ -19,12 +18,12 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { HeroSlidesModule } from './modules/hero-slides/hero-slides.module';
 import { SeedModule } from './seed/seed.module';
 
 import { User } from './modules/users/entities/user.entity';
 import { Role } from './modules/users/entities/role.entity';
-import { Business } from './modules/businesses/entities/business.entity';
-import { Store } from './modules/stores/entities/store.entity';
+import { Shop } from './modules/shops/entities/shop.entity';
 import { Offer } from './modules/offers/entities/offer.entity';
 import { OfferImage } from './modules/offers/entities/offer-image.entity';
 import { Category } from './modules/categories/entities/category.entity';
@@ -35,6 +34,7 @@ import { City } from './modules/locations/entities/city.entity';
 import { District } from './modules/locations/entities/district.entity';
 import { Analytics } from './modules/analytics/entities/analytics.entity';
 import { AuditLog } from './modules/analytics/entities/audit-log.entity';
+import { HeroSlide } from './modules/hero-slides/entities/hero-slide.entity';
 
 @Module({
   imports: [
@@ -54,8 +54,7 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
         const entities = [
           User,
           Role,
-          Business,
-          Store,
+          Shop,
           Offer,
           OfferImage,
           Category,
@@ -66,6 +65,7 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
           District,
           Analytics,
           AuditLog,
+          HeroSlide,
         ];
 
         const databaseUrl = config.get<string>('DATABASE_URL');
@@ -109,8 +109,7 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
     }),
     AuthModule,
     UsersModule,
-    BusinessesModule,
-    StoresModule,
+    ShopsModule,
     OffersModule,
     CategoriesModule,
     LocationsModule,
@@ -120,6 +119,7 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
     AnalyticsModule,
     DashboardModule,
     ReportsModule,
+    HeroSlidesModule,
     SeedModule,
   ],
   providers: [

@@ -9,11 +9,12 @@ import {
   AdminCategory,
   AdminService,
   AdminUser,
+  HeroSlide,
 } from '../../services/admin.service';
 import { DashboardOfferRow, DashboardStats } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
 
-type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
+type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -24,7 +25,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 class="section-title">Admin dashboard</h1>
-          <p class="section-sub">Moderate businesses, offers, categories and users.</p>
+          <p class="section-sub">Moderate shops, offers, home hero, categories and users.</p>
         </div>
         <button type="button" class="btn-secondary" (click)="reloadAll()">
           <mat-icon>refresh</mat-icon>
@@ -106,7 +107,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
               <p class="mt-2 text-sm text-teal-100">Jump into the tabs to approve pending items.</p>
               <ul class="mt-6 space-y-3 text-sm">
                 <li class="rounded-xl bg-white/10 px-4 py-3">
-                  {{ stats.pendingBusinesses || 0 }} business applications pending
+                  {{ stats.pendingBusinesses || 0 }} shop applications pending
                 </li>
                 <li class="rounded-xl bg-white/10 px-4 py-3">
                   {{ stats.pendingOffers || 0 }} offers awaiting approval
@@ -117,7 +118,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
               </ul>
               <div class="mt-6 flex flex-wrap gap-2">
                 <button type="button" class="btn-gold !py-2 text-xs" (click)="setTab('businesses')">
-                  Review businesses
+                  Review shops
                 </button>
                 <button type="button" class="btn-secondary !border-white/30 !bg-white/10 !py-2 !text-white text-xs" (click)="setTab('offers')">
                   Review offers
@@ -130,7 +131,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
         @if (activeTab === 'businesses') {
           <div class="mt-8 surface-panel">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <h2 class="font-display text-xl font-semibold text-teal-900">Businesses</h2>
+              <h2 class="font-display text-xl font-semibold text-teal-900">Shops</h2>
               <div class="flex flex-wrap gap-2">
                 <button type="button" class="chip" (click)="loadBusinesses()">All</button>
                 <button type="button" class="chip" (click)="loadBusinesses('PENDING')">Pending</button>
@@ -139,7 +140,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
               </div>
             </div>
             @if (!businesses.length) {
-              <p class="mt-4 text-sm text-[var(--color-muted)]">No businesses found.</p>
+              <p class="mt-4 text-sm text-[var(--color-muted)]">No shops found.</p>
             } @else {
               <ul class="mt-4 space-y-3">
                 @for (biz of businesses; track biz.id) {
@@ -268,6 +269,107 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'users';
           </div>
         }
 
+        @if (activeTab === 'hero') {
+          <div class="mt-8 grid gap-6 lg:grid-cols-2">
+            <form class="surface-panel space-y-4" [formGroup]="heroForm" (ngSubmit)="createHeroSlide()">
+              <h2 class="font-display text-xl font-semibold text-teal-900">Add hero slide</h2>
+              <p class="text-sm text-[var(--color-muted)]">
+                Slides marked visible appear in the home page slideshow.
+              </p>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="heroTitle">Title</label>
+                <input id="heroTitle" class="input-field" formControlName="title" placeholder="Weekend Food Fest" />
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="heroSubtitle">Subtitle</label>
+                <input
+                  id="heroSubtitle"
+                  class="input-field"
+                  formControlName="subtitle"
+                  placeholder="Deals across Colombo this weekend"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="heroImage">Image URL</label>
+                <input
+                  id="heroImage"
+                  class="input-field"
+                  formControlName="imageUrl"
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-sm font-medium" for="heroCta">CTA label</label>
+                  <input id="heroCta" class="input-field" formControlName="ctaLabel" placeholder="Browse offers" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium" for="heroLink">CTA link</label>
+                  <input id="heroLink" class="input-field" formControlName="ctaLink" placeholder="/offers" />
+                </div>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-sm font-medium" for="heroOrder">Sort order</label>
+                  <input id="heroOrder" type="number" class="input-field" formControlName="sortOrder" />
+                </div>
+                <label class="flex items-end gap-2 pb-2 text-sm font-medium">
+                  <input type="checkbox" formControlName="isActive" class="h-4 w-4 rounded border-teal-300" />
+                  Visible on home
+                </label>
+              </div>
+              <button type="submit" class="btn-primary" [disabled]="heroForm.invalid || savingHero">
+                {{ savingHero ? 'Saving…' : 'Add slide' }}
+              </button>
+            </form>
+
+            <div class="surface-panel">
+              <h2 class="font-display text-xl font-semibold text-teal-900">Hero slides</h2>
+              @if (!heroSlides.length) {
+                <p class="mt-4 text-sm text-[var(--color-muted)]">No slides yet. Add one to start the slideshow.</p>
+              } @else {
+                <ul class="mt-4 space-y-3">
+                  @for (slide of heroSlides; track slide.id) {
+                    <li class="rounded-xl border border-teal-50 p-3 text-sm">
+                      <div class="flex gap-3">
+                        <img
+                          [src]="slide.imageUrl"
+                          [alt]="slide.title"
+                          class="h-16 w-24 shrink-0 rounded-lg object-cover"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <p class="font-semibold text-teal-900">{{ slide.title }}</p>
+                          <p class="truncate text-[var(--color-muted)]">{{ slide.subtitle || 'No subtitle' }}</p>
+                          <p class="mt-1 text-xs text-teal-700">
+                            Order {{ slide.sortOrder ?? 0 }} ·
+                            {{ slide.isActive === false ? 'Hidden' : 'Visible' }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          class="btn-secondary !px-3 !py-1.5 text-xs"
+                          (click)="toggleHeroVisible(slide)"
+                        >
+                          {{ slide.isActive === false ? 'Make visible' : 'Hide' }}
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700"
+                          (click)="removeHeroSlide(slide.id)"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
+
         @if (activeTab === 'users') {
           <div class="mt-8 surface-panel overflow-x-auto">
             <h2 class="font-display text-xl font-semibold text-teal-900">Users</h2>
@@ -311,9 +413,10 @@ export class AdminDashboardComponent implements OnInit {
   activeTab: Tab = 'overview';
   tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'businesses', label: 'Businesses' },
+    { id: 'businesses', label: 'Shops' },
     { id: 'offers', label: 'Offers' },
     { id: 'categories', label: 'Categories' },
+    { id: 'hero', label: 'Home hero' },
     { id: 'users', label: 'Users' },
   ];
 
@@ -322,6 +425,7 @@ export class AdminDashboardComponent implements OnInit {
   businesses: AdminBusiness[] = [];
   managedOffers: DashboardOfferRow[] = [];
   categories: AdminCategory[] = [];
+  heroSlides: HeroSlide[] = [];
   users: AdminUser[] = [];
 
   loading = true;
@@ -330,11 +434,22 @@ export class AdminDashboardComponent implements OnInit {
   actionError = '';
   cards: { label: string; value: string }[] = [];
   savingCategory = false;
+  savingHero = false;
 
   categoryForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     slug: [''],
     description: [''],
+  });
+
+  heroForm = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(2)]],
+    subtitle: [''],
+    imageUrl: ['', [Validators.required, Validators.minLength(8)]],
+    ctaLabel: ['Browse offers'],
+    ctaLink: ['/offers'],
+    sortOrder: [0],
+    isActive: [true],
   });
 
   ngOnInit(): void {
@@ -348,6 +463,7 @@ export class AdminDashboardComponent implements OnInit {
     if (tab === 'businesses') this.loadBusinesses();
     if (tab === 'offers') this.loadOffers();
     if (tab === 'categories') this.loadCategories();
+    if (tab === 'hero') this.loadHeroSlides();
     if (tab === 'users') this.loadUsers();
   }
 
@@ -362,13 +478,13 @@ export class AdminDashboardComponent implements OnInit {
         this.stats = stats;
         this.cards = [
           { label: 'Users', value: String(stats.users ?? 0) },
-          { label: 'Businesses', value: String(stats.businesses ?? 0) },
-          { label: 'Stores', value: String(stats.stores ?? 0) },
+          { label: 'Shops', value: String(stats.businesses ?? 0) },
+          { label: 'Shop locations', value: String(stats.stores ?? 0) },
           { label: 'Active offers', value: String(stats.activeOffers) },
           { label: 'Total offers', value: String(stats.totalOffers) },
           { label: 'Views', value: String(stats.totalViews) },
           { label: 'Favourites', value: String(stats.favorites) },
-          { label: 'Pending businesses', value: String(stats.pendingBusinesses ?? 0) },
+          { label: 'Pending shops', value: String(stats.pendingBusinesses ?? 0) },
           { label: 'Pending offers', value: String(stats.pendingOffers ?? 0) },
         ];
         this.loading = false;
@@ -407,6 +523,73 @@ export class AdminDashboardComponent implements OnInit {
     this.admin.getUsers().subscribe({
       next: (list) => (this.users = list),
       error: (err: Error) => (this.actionError = err.message || 'Could not load users'),
+    });
+  }
+
+  loadHeroSlides(): void {
+    this.admin.getHeroSlides().subscribe({
+      next: (list) => (this.heroSlides = list),
+      error: (err: Error) => (this.actionError = err.message || 'Could not load hero slides'),
+    });
+  }
+
+  createHeroSlide(): void {
+    if (this.heroForm.invalid) return;
+    this.savingHero = true;
+    this.actionError = '';
+    const value = this.heroForm.getRawValue();
+    this.admin
+      .createHeroSlide({
+        title: value.title,
+        subtitle: value.subtitle || undefined,
+        imageUrl: value.imageUrl,
+        ctaLabel: value.ctaLabel || undefined,
+        ctaLink: value.ctaLink || undefined,
+        sortOrder: Number(value.sortOrder) || 0,
+        isActive: value.isActive,
+      })
+      .subscribe({
+        next: (slide) => {
+          this.savingHero = false;
+          this.actionMessage = `Slide “${slide.title}” added`;
+          this.heroForm.reset({
+            title: '',
+            subtitle: '',
+            imageUrl: '',
+            ctaLabel: 'Browse offers',
+            ctaLink: '/offers',
+            sortOrder: 0,
+            isActive: true,
+          });
+          this.loadHeroSlides();
+        },
+        error: (err: Error) => {
+          this.savingHero = false;
+          this.actionError = err.message || 'Could not create hero slide';
+        },
+      });
+  }
+
+  toggleHeroVisible(slide: HeroSlide): void {
+    this.actionError = '';
+    this.admin.updateHeroSlide(slide.id, { isActive: slide.isActive === false }).subscribe({
+      next: (updated) => {
+        this.actionMessage = updated.isActive
+          ? `“${updated.title}” is now visible`
+          : `“${updated.title}” hidden from home`;
+        this.loadHeroSlides();
+      },
+      error: (err: Error) => (this.actionError = err.message || 'Could not update slide'),
+    });
+  }
+
+  removeHeroSlide(id: string): void {
+    this.admin.deleteHeroSlide(id).subscribe({
+      next: () => {
+        this.actionMessage = 'Hero slide deleted';
+        this.loadHeroSlides();
+      },
+      error: (err: Error) => (this.actionError = err.message || 'Could not delete slide'),
     });
   }
 

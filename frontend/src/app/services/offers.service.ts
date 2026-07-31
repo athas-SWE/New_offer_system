@@ -1,7 +1,37 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from './api.service';
 import { Offer, OfferFilter } from '../models';
+
+const PLACEHOLDER_IMAGE =
+  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80';
+
+interface ApiOffer {
+  id: string;
+  title: string;
+  description?: string | null;
+  discountPercent?: number | string;
+  image?: string | null;
+  images?: Array<{ imageUrl?: string; isPrimary?: boolean }>;
+  categoryId?: string | null;
+  category?: { id?: string; name?: string } | null;
+  shopId?: string;
+  businessId?: string;
+  shop?: { id?: string; name?: string; address?: string | null; logoUrl?: string | null } | null;
+  business?: { id?: string; name?: string; address?: string | null } | null;
+  cityId?: string | null;
+  city?: { id?: string; name?: string } | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+
+interface PaginatedOffers {
+  data: ApiOffer[];
+  meta?: { total: number; page: number; limit: number; totalPages: number };
+}
 
 const MOCK_OFFERS: Offer[] = [
   {
@@ -25,108 +55,6 @@ const MOCK_OFFERS: Offer[] = [
     tags: ['seafood', 'weekend'],
     distanceKm: 1.2,
   },
-  {
-    id: 'o2',
-    title: 'Monsoon Spa Escape',
-    description: '90-minute aromatherapy massage with herbal tea.',
-    discountPercent: 40,
-    originalPrice: 9000,
-    offerPrice: 5400,
-    imageUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80',
-    categoryId: 'c-wellness',
-    categoryName: 'Wellness',
-    storeId: 's2',
-    storeName: 'Lotus Wellness',
-    city: 'Kandy',
-    latitude: 7.2906,
-    longitude: 80.6337,
-    startsAt: '2026-07-10',
-    endsAt: '2026-09-15',
-    isFeatured: true,
-    tags: ['spa', 'relax'],
-    distanceKm: 4.8,
-  },
-  {
-    id: 'o3',
-    title: 'Island Fashion Drop',
-    description: 'Buy 2 get 1 free on batik shirts & linen sets.',
-    discountPercent: 30,
-    originalPrice: 4800,
-    offerPrice: 3360,
-    imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
-    categoryId: 'c-fashion',
-    categoryName: 'Fashion',
-    storeId: 's3',
-    storeName: 'Ceylon Threads',
-    city: 'Negombo',
-    latitude: 7.2083,
-    longitude: 79.8358,
-    startsAt: '2026-07-05',
-    endsAt: '2026-08-20',
-    tags: ['batik', 'sale'],
-    distanceKm: 2.1,
-  },
-  {
-    id: 'o4',
-    title: 'Hill Country Staycation',
-    description: 'One night in a boutique tea bungalow with breakfast.',
-    discountPercent: 25,
-    originalPrice: 22000,
-    offerPrice: 16500,
-    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
-    categoryId: 'c-travel',
-    categoryName: 'Travel',
-    storeId: 's4',
-    storeName: 'Misty Peak Lodge',
-    city: 'Nuwara Eliya',
-    latitude: 6.9497,
-    longitude: 80.7891,
-    startsAt: '2026-07-01',
-    endsAt: '2026-10-01',
-    isFeatured: true,
-    tags: ['hotel', 'tea country'],
-    distanceKm: 12.4,
-  },
-  {
-    id: 'o5',
-    title: 'Tech Bundle Week',
-    description: 'Wireless earbuds + power bank combo at Liberty Plaza.',
-    discountPercent: 20,
-    originalPrice: 12500,
-    offerPrice: 10000,
-    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-    categoryId: 'c-electronics',
-    categoryName: 'Electronics',
-    storeId: 's5',
-    storeName: 'Pixel Hub',
-    city: 'Colombo',
-    latitude: 6.9147,
-    longitude: 79.8507,
-    startsAt: '2026-07-20',
-    endsAt: '2026-08-10',
-    tags: ['gadgets'],
-    distanceKm: 0.9,
-  },
-  {
-    id: 'o6',
-    title: 'Family Fun Day Pass',
-    description: 'Unlimited rides for 2 adults + 2 kids at Softlogic.',
-    discountPercent: 45,
-    originalPrice: 8000,
-    offerPrice: 4400,
-    imageUrl: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&q=80',
-    categoryId: 'c-entertainment',
-    categoryName: 'Entertainment',
-    storeId: 's6',
-    storeName: 'PlaySphere SL',
-    city: 'Colombo',
-    latitude: 6.9278,
-    longitude: 79.8615,
-    startsAt: '2026-07-15',
-    endsAt: '2026-09-01',
-    tags: ['family', 'kids'],
-    distanceKm: 1.5,
-  },
 ];
 
 @Injectable({ providedIn: 'root' })
@@ -134,34 +62,114 @@ export class OffersService {
   private readonly api = inject(ApiService);
 
   getOffers(filter: OfferFilter = {}): Observable<Offer[]> {
-    return this.api.get<Offer[]>('/offers', filter as Record<string, string | number | boolean | undefined>).pipe(
+    const params: Record<string, string | number | boolean | undefined> = {
+      page: 1,
+      limit: 50,
+    };
+    if (filter.search?.trim()) params['search'] = filter.search.trim();
+    if (filter.categoryId) params['categoryId'] = filter.categoryId;
+    if (filter.storeId) params['shopId'] = filter.storeId;
+
+    return this.api.get<PaginatedOffers | ApiOffer[]>('/offers', params).pipe(
+      map((res) => {
+        const rows = Array.isArray(res) ? res : res.data || [];
+        let offers = rows.map((row) => this.mapOffer(row));
+        if (filter.city) {
+          const city = filter.city.toLowerCase();
+          offers = offers.filter((o) => o.city?.toLowerCase() === city);
+        }
+        if (filter.minDiscount) {
+          offers = offers.filter((o) => o.discountPercent >= filter.minDiscount!);
+        }
+        return offers;
+      }),
       catchError(() => of(this.filterMock(filter)))
     );
   }
 
   getOfferById(id: string): Observable<Offer | undefined> {
-    return this.api.get<Offer>(`/offers/${id}`).pipe(
+    return this.api.get<ApiOffer>(`/offers/${id}`).pipe(
+      map((row) => this.mapOffer(row)),
       catchError(() => of(MOCK_OFFERS.find((o) => o.id === id)))
     );
   }
 
   getFeatured(): Observable<Offer[]> {
-    return this.api.get<Offer[]>('/offers/featured').pipe(
+    return this.getOffers().pipe(
+      map((offers) => offers.slice(0, 6)),
       catchError(() => of(MOCK_OFFERS.filter((o) => o.isFeatured)))
     );
   }
 
   getNearby(lat: number, lng: number, radiusKm = 10): Observable<Offer[]> {
-    return this.api.get<Offer[]>('/offers/nearby', { lat, lng, radiusKm }).pipe(
-      catchError(() =>
-        of(
-          MOCK_OFFERS.map((o) => ({
+    return this.getOffers().pipe(
+      map((offers) =>
+        offers
+          .map((o) => ({
             ...o,
-            distanceKm: o.distanceKm ?? Math.random() * radiusKm,
-          })).sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99))
-        )
-      )
+            distanceKm:
+              o.latitude != null && o.longitude != null
+                ? this.haversineKm(lat, lng, o.latitude, o.longitude)
+                : undefined,
+          }))
+          .filter((o) => o.distanceKm == null || o.distanceKm <= radiusKm)
+          .sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99))
+      ),
+      catchError(() => of(MOCK_OFFERS))
     );
+  }
+
+  private mapOffer(row: ApiOffer): Offer {
+    const discount = Number(row.discountPercent) || 0;
+    const primaryImage =
+      row.image ||
+      row.images?.find((img) => img.isPrimary)?.imageUrl ||
+      row.images?.[0]?.imageUrl ||
+      PLACEHOLDER_IMAGE;
+
+    const shop = row.shop || row.business;
+    const cityName =
+      row.city?.name ||
+      this.cityFromAddress(shop?.address) ||
+      'Sri Lanka';
+
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description || '',
+      discountPercent: discount,
+      originalPrice: 0,
+      offerPrice: 0,
+      imageUrl: primaryImage,
+      categoryId: row.categoryId || row.category?.id || '',
+      categoryName: row.category?.name || 'Offer',
+      storeId: row.shopId || row.businessId || shop?.id || '',
+      storeName: shop?.name || 'Shop',
+      city: cityName,
+      latitude: row.latitude != null ? Number(row.latitude) : undefined,
+      longitude: row.longitude != null ? Number(row.longitude) : undefined,
+      startsAt: row.startDate || new Date().toISOString(),
+      endsAt: row.endDate || new Date().toISOString(),
+      isFeatured: row.status === 'ACTIVE',
+      tags: row.status ? [row.status.toLowerCase()] : [],
+    };
+  }
+
+  private cityFromAddress(address?: string | null): string | undefined {
+    if (!address) return undefined;
+    const known = ['Colombo', 'Kandy', 'Negombo', 'Nuwara Eliya', 'Galle', 'Jaffna'];
+    return known.find((city) => address.toLowerCase().includes(city.toLowerCase()));
+  }
+
+  private haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const r = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   private filterMock(filter: OfferFilter): Offer[] {

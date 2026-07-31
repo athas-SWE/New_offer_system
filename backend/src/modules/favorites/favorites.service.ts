@@ -67,7 +67,7 @@ export class FavoritesService {
   async findMine(userId: string) {
     return this.favoriteRepo.find({
       where: { userId, isDeleted: false },
-      relations: ['offer', 'offer.business', 'offer.category'],
+      relations: ['offer', 'offer.shop', 'offer.category'],
       order: { createdDate: 'DESC' },
     });
   }
