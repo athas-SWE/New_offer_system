@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+uploads
+.env
+.env.local
+*.md
+.git
+.gitignore
+.prettierrc
+eslint.config.mjs
+test
+*.spec.ts
