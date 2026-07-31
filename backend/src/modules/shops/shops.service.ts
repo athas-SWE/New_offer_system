@@ -49,7 +49,7 @@ export class ShopsService {
       throw new BadRequestException('BUSINESS_OWNER role missing. Run seed.');
     }
 
-    return this.dataSource.transaction(async (manager) => {
+    const savedShop = await this.dataSource.transaction(async (manager) => {
       const user = manager.create(User, {
         name: dto.ownerName,
         email: dto.ownerEmail.toLowerCase(),
@@ -74,12 +74,10 @@ export class ShopsService {
         createdBy: savedUser.id,
         isDeleted: false,
       });
-      const savedShop = await manager.save(shop);
-      return manager.findOneOrFail(Shop, {
-        where: { id: savedShop.id },
-        relations: ['owner', 'city'],
-      });
+      return manager.save(shop);
     });
+
+    return this.findOne(savedShop.id);
   }
 
   async create(dto: CreateShopDto, actorId: string, role: string) {
@@ -165,6 +163,17 @@ export class ShopsService {
       throw new ForbiddenException('Not allowed to update this shop');
     }
     Object.assign(shop, { ...dto, updatedBy: actorId });
+    await this.shopRepo.save(shop);
+    return this.findOne(id);
+  }
+
+  async updateLogo(id: string, logoUrl: string, actorId: string, role: string) {
+    const shop = await this.findOne(id);
+    if (role !== UserRole.ADMIN && shop.ownerId !== actorId) {
+      throw new ForbiddenException('Not allowed to update this shop');
+    }
+    shop.logoUrl = logoUrl;
+    shop.updatedBy = actorId;
     await this.shopRepo.save(shop);
     return this.findOne(id);
   }

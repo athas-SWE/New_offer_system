@@ -72,14 +72,7 @@ export class LoginComponent {
           void this.router.navigateByUrl(returnUrl);
           return;
         }
-        if (res.user.role === 'ADMIN') {
-          void this.router.navigate(['/admin']);
-        } else if (res.user.role === 'BUSINESS_OWNER') {
-          void this.router.navigate(['/business']);
-        } else {
-          // No customer login — send anyone else to the public marketplace
-          void this.router.navigate(['/']);
-        }
+        void this.router.navigateByUrl(this.auth.homePath());
       },
       error: (err: Error) => {
         this.loading = false;

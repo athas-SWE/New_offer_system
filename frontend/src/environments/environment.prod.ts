@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: 'http://localhost:3000/api',
+  assetsUrl: 'http://localhost:3000',
   firebase: {
     apiKey: 'YOUR_API_KEY',
     authDomain: 'offer-lanka.firebaseapp.com',

@@ -60,10 +60,10 @@ import { AuthService } from '../../services/auth.service';
               >
                 {{ user.name }}
               </a>
-              @if (user.role === 'ADMIN') {
+              @if (auth.isAdmin()) {
                 <a routerLink="/admin" class="btn-primary !px-5 !py-2.5 !text-base">Admin</a>
               }
-              @if (user.role === 'BUSINESS_OWNER') {
+              @if (auth.isShopOwner()) {
                 <a routerLink="/business" class="btn-primary !px-5 !py-2.5 !text-base">Shop</a>
               }
             </ng-container>
@@ -112,7 +112,7 @@ import { AuthService } from '../../services/auth.service';
               >
                 Profile · {{ user.name }}
               </a>
-              @if (user.role === 'ADMIN') {
+              @if (auth.isAdmin()) {
                 <a
                   routerLink="/admin"
                   class="rounded-xl bg-teal-700 px-4 py-3 text-base font-semibold text-white"
@@ -121,7 +121,7 @@ import { AuthService } from '../../services/auth.service';
                   Admin dashboard
                 </a>
               }
-              @if (user.role === 'BUSINESS_OWNER') {
+              @if (auth.isShopOwner()) {
                 <a
                   routerLink="/business"
                   class="rounded-xl bg-teal-700 px-4 py-3 text-base font-semibold text-white"

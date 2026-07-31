@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -8,8 +9,17 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ShopsService } from './shops.service';
 import {
   RegisterShopDto,
@@ -22,6 +32,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import {
+  multerImageOptions,
+  publicUploadPath,
+} from '../../common/upload/multer.options';
 
 @ApiTags('Shops')
 @Controller(['shops', 'stores'])
@@ -88,6 +102,32 @@ export class ShopsController {
     @CurrentUser('role') role: string,
   ) {
     return this.shopsService.update(id, dto, actorId, role);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post(':id/logo')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', multerImageOptions('shops')))
+  @ApiOperation({ summary: 'Upload shop logo image' })
+  uploadLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+    const url = publicUploadPath('shops', file.filename);
+    return this.shopsService.updateLogo(id, url, actorId, role);
   }
 
   @ApiBearerAuth('access-token')

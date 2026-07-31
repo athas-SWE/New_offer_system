@@ -26,6 +26,7 @@ export interface DashboardOfferRow {
   likes?: number;
   endsAt: string;
   businessName?: string;
+  imageUrl?: string;
 }
 
 export interface CustomerDashboard extends DashboardStats {

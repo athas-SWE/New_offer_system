@@ -14,11 +14,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   const uploadDest = configService.get<string>('UPLOAD_DEST', './uploads');
-  if (!existsSync(uploadDest)) {
-    mkdirSync(uploadDest, { recursive: true });
-  }
-  if (!existsSync(join(uploadDest, 'offers'))) {
-    mkdirSync(join(uploadDest, 'offers'), { recursive: true });
+  for (const dir of [uploadDest, join(uploadDest, 'offers'), join(uploadDest, 'shops')]) {
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
   }
 
   app.setGlobalPrefix('api');
@@ -30,7 +29,7 @@ async function bootstrap() {
         directives: {
           defaultSrc: [`'self'`],
           styleSrc: [`'self'`, `'unsafe-inline'`],
-          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+          imgSrc: [`'self'`, 'data:', 'blob:', 'validator.swagger.io', 'http://localhost:4200'],
           scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
         },
       },

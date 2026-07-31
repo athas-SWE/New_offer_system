@@ -36,4 +36,11 @@ export class ApiService {
   delete<T>(path: string): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${path}`);
   }
+
+  /** Multipart upload — do not set Content-Type so the browser adds the boundary. */
+  upload<T>(path: string, file: File, fieldName = 'file'): Observable<T> {
+    const form = new FormData();
+    form.append(fieldName, file, file.name);
+    return this.http.post<T>(`${this.baseUrl}${path}`, form);
+  }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -14,19 +15,21 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { OffersService } from './offers.service';
 import { CreateOfferDto, UpdateOfferDto, OfferQueryDto } from './dto/offer.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import {
+  multerImageOptions,
+  publicUploadPath,
+} from '../../common/upload/multer.options';
 
 @ApiTags('Offers')
 @Controller('offers')
@@ -103,17 +106,14 @@ export class OffersController {
   @Post(':id/images')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/offers',
-        filename: (_req, file, cb) => {
-          cb(null, `${uuidv4()}${extname(file.originalname)}`);
-        },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-    }),
-  )
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', multerImageOptions('offers')))
   @ApiOperation({ summary: 'Upload offer image' })
   uploadImage(
     @Param('id', ParseUUIDPipe) id: string,
@@ -121,7 +121,10 @@ export class OffersController {
     @CurrentUser('id') actorId: string,
     @CurrentUser('role') role: string,
   ) {
-    const url = `/uploads/offers/${file.filename}`;
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+    const url = publicUploadPath('offers', file.filename);
     return this.offersService.addImage(id, url, actorId, role);
   }
 }

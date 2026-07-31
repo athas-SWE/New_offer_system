@@ -184,17 +184,22 @@ export class OffersService {
   async addImage(offerId: string, imageUrl: string, actorId: string, role: string) {
     const offer = await this.findOne(offerId);
     await this.assertOwnership(offer, actorId, role);
+
+    await this.offerImageRepo.update(
+      { offerId, isDeleted: false },
+      { isPrimary: false },
+    );
+
     const image = this.offerImageRepo.create({
       offerId,
       imageUrl,
-      isPrimary: !offer.image,
+      isPrimary: true,
       createdBy: actorId,
       isDeleted: false,
     });
-    if (!offer.image) {
-      offer.image = imageUrl;
-      await this.offerRepo.save(offer);
-    }
+    offer.image = imageUrl;
+    offer.updatedBy = actorId;
+    await this.offerRepo.save(offer);
     return this.offerImageRepo.save(image);
   }
 

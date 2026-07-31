@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from './api.service';
 import { Offer, OfferFilter } from '../models';
+import { resolveAssetUrl } from '../utils/asset-url';
 
 const PLACEHOLDER_IMAGE =
   'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80';
@@ -122,10 +123,11 @@ export class OffersService {
   private mapOffer(row: ApiOffer): Offer {
     const discount = Number(row.discountPercent) || 0;
     const primaryImage =
-      row.image ||
-      row.images?.find((img) => img.isPrimary)?.imageUrl ||
-      row.images?.[0]?.imageUrl ||
-      PLACEHOLDER_IMAGE;
+      resolveAssetUrl(
+        row.image ||
+          row.images?.find((img) => img.isPrimary)?.imageUrl ||
+          row.images?.[0]?.imageUrl,
+      ) || PLACEHOLDER_IMAGE;
 
     const shop = row.shop || row.business;
     const cityName =

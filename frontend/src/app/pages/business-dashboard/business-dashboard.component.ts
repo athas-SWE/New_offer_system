@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { DashboardService } from '../../services/dashboard.service';
@@ -48,18 +48,48 @@ type Tab = 'overview' | 'stores' | 'offers';
       } @else if (error) {
         <div class="mt-8 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
       } @else {
+        @if (justRegistered) {
+          <div class="mt-6 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+            Shop application submitted. An admin will review it shortly. You can prepare offers while you wait, but the shop stays hidden until approved.
+          </div>
+        }
+
         @if (business) {
           <div class="mt-6 surface-panel flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-teal-600">My shop</p>
-              <h2 class="font-display text-2xl font-semibold text-teal-900">{{ business.name }}</h2>
-              <p class="text-sm text-[var(--color-muted)]">{{ business.address || 'No address set' }}</p>
+            <div class="flex items-center gap-4">
+              @if (business.logoUrl) {
+                <img
+                  [src]="business.logoUrl"
+                  [alt]="business.name"
+                  class="h-16 w-16 rounded-xl object-cover ring-1 ring-teal-100"
+                />
+              }
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-teal-600">My shop</p>
+                <h2 class="font-display text-2xl font-semibold text-teal-900">{{ business.name }}</h2>
+                <p class="text-sm text-[var(--color-muted)]">{{ business.address || 'No address set' }}</p>
+              </div>
             </div>
             <span class="chip">{{ business.status }}</span>
           </div>
+          @if (business.status === 'PENDING') {
+            <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Status: <strong>PENDING</strong> — your shop is not public yet. Admin must approve it under Admin → Shops.
+            </div>
+          } @else if (business.status === 'REJECTED') {
+            <div class="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              Status: <strong>REJECTED</strong> — contact support or update your shop details and ask admin to re-review.
+            </div>
+          } @else if (business.status === 'SUSPENDED') {
+            <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Status: <strong>SUSPENDED</strong> — publishing is limited until an admin restores your shop.
+            </div>
+          }
         } @else {
           <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            No shop is linked to this account yet. Ask admin to approve your shop registration.
+            No shop is linked to this account yet.
+            <a routerLink="/register" class="font-semibold text-teal-800 underline">Register a shop</a>
+            or ask admin to approve your application.
           </div>
         }
 
@@ -126,6 +156,19 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <label class="mb-1 block text-sm font-medium" for="storeDesc">Description</label>
                 <textarea id="storeDesc" rows="3" class="input-field" formControlName="description"></textarea>
               </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="storeLogo">Shop logo</label>
+                <input
+                  id="storeLogo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
+                  (change)="onStoreLogoSelected($event)"
+                />
+                @if (storeLogoPreview) {
+                  <img [src]="storeLogoPreview" alt="Logo preview" class="mt-3 h-20 w-20 rounded-xl object-cover" />
+                }
+              </div>
               @if (storeMessage) {
                 <p class="text-sm font-medium text-teal-700">{{ storeMessage }}</p>
               }
@@ -145,9 +188,35 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <ul class="mt-4 space-y-3">
                   @for (store of business?.stores; track store.id) {
                     <li class="rounded-xl border border-teal-50 px-4 py-3">
-                      <p class="font-semibold text-teal-900">{{ store.name }}</p>
-                      <p class="text-sm text-[var(--color-muted)]">{{ store.address || 'No address' }}</p>
-                      <p class="text-xs text-teal-700">{{ store.phone }}</p>
+                      <div class="flex items-start gap-3">
+                        @if (store.logoUrl) {
+                          <img
+                            [src]="store.logoUrl"
+                            [alt]="store.name"
+                            class="h-14 w-14 shrink-0 rounded-xl object-cover"
+                          />
+                        } @else {
+                          <div
+                            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700"
+                          >
+                            <mat-icon>store</mat-icon>
+                          </div>
+                        }
+                        <div class="min-w-0 flex-1">
+                          <p class="font-semibold text-teal-900">{{ store.name }}</p>
+                          <p class="text-sm text-[var(--color-muted)]">{{ store.address || 'No address' }}</p>
+                          <p class="text-xs text-teal-700">{{ store.phone }}</p>
+                          <label class="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-teal-700 hover:underline">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/gif,image/webp"
+                              class="sr-only"
+                              (change)="uploadLogoForShop(store.id, $event)"
+                            />
+                            {{ uploadingLogoId === store.id ? 'Uploading…' : 'Upload / change logo' }}
+                          </label>
+                        </div>
+                      </div>
                     </li>
                   }
                 </ul>
@@ -196,6 +265,19 @@ type Tab = 'overview' | 'stores' | 'offers';
                   <option value="PENDING">Pending approval</option>
                 </select>
               </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="offerImage">Offer image</label>
+                <input
+                  id="offerImage"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
+                  (change)="onOfferImageSelected($event)"
+                />
+                @if (offerImagePreview) {
+                  <img [src]="offerImagePreview" alt="Offer preview" class="mt-3 h-28 w-full max-w-xs rounded-xl object-cover" />
+                }
+              </div>
               @if (offerMessage) {
                 <p class="text-sm font-medium text-teal-700">{{ offerMessage }}</p>
               }
@@ -220,27 +302,43 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <ul class="mt-4 space-y-3">
                   @for (row of managedOffers; track row.id) {
                     <li class="rounded-xl border border-teal-50 px-4 py-3 text-sm">
-                      <div class="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <a [routerLink]="['/offers', row.id]" class="font-semibold text-teal-900 hover:underline">
-                            {{ row.title }}
-                          </a>
-                          <p class="text-[var(--color-muted)]">
-                            {{ row.views }} views · ends {{ row.endsAt | date: 'mediumDate' }}
-                          </p>
+                      <div class="flex flex-wrap items-start gap-3">
+                        @if (row.imageUrl) {
+                          <img [src]="row.imageUrl" [alt]="row.title" class="h-14 w-14 rounded-lg object-cover" />
+                        }
+                        <div class="min-w-0 flex-1">
+                          <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <a [routerLink]="['/offers', row.id]" class="font-semibold text-teal-900 hover:underline">
+                                {{ row.title }}
+                              </a>
+                              <p class="text-[var(--color-muted)]">
+                                {{ row.views }} views · ends {{ row.endsAt | date: 'mediumDate' }}
+                              </p>
+                            </div>
+                            <span class="chip">{{ row.status }}</span>
+                          </div>
+                          <div class="mt-3 flex flex-wrap gap-2">
+                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'ACTIVE')">
+                              Publish
+                            </button>
+                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'DRAFT')">
+                              Draft
+                            </button>
+                            <label class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs">
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                class="sr-only"
+                                (change)="uploadImageForOffer(row.id, $event)"
+                              />
+                              {{ uploadingOfferImageId === row.id ? 'Uploading…' : 'Image' }}
+                            </label>
+                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700" (click)="removeOffer(row.id)">
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                        <span class="chip">{{ row.status }}</span>
-                      </div>
-                      <div class="mt-3 flex flex-wrap gap-2">
-                        <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'ACTIVE')">
-                          Publish
-                        </button>
-                        <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'DRAFT')">
-                          Draft
-                        </button>
-                        <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700" (click)="removeOffer(row.id)">
-                          Delete
-                        </button>
                       </div>
                     </li>
                   }
@@ -257,8 +355,10 @@ export class BusinessDashboardComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
   private readonly businessApi = inject(BusinessService);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
 
   activeTab: Tab = 'overview';
+  justRegistered = false;
   tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'stores', label: 'Shops' },
@@ -280,6 +380,13 @@ export class BusinessDashboardComponent implements OnInit {
   offerMessage = '';
   offerError = '';
 
+  storeLogoFile: File | null = null;
+  storeLogoPreview = '';
+  offerImageFile: File | null = null;
+  offerImagePreview = '';
+  uploadingLogoId = '';
+  uploadingOfferImageId = '';
+
   storeForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     address: [''],
@@ -298,6 +405,7 @@ export class BusinessDashboardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.justRegistered = this.route.snapshot.queryParamMap.get('registered') === '1';
     this.reloadAll();
   }
 
@@ -340,21 +448,52 @@ export class BusinessDashboardComponent implements OnInit {
     });
   }
 
+  onStoreLogoSelected(event: Event): void {
+    const file = this.fileFromEvent(event);
+    this.storeLogoFile = file;
+    this.storeLogoPreview = file ? URL.createObjectURL(file) : '';
+  }
+
+  onOfferImageSelected(event: Event): void {
+    const file = this.fileFromEvent(event);
+    this.offerImageFile = file;
+    this.offerImagePreview = file ? URL.createObjectURL(file) : '';
+  }
+
   createStore(): void {
     if (this.storeForm.invalid) return;
     this.savingStore = true;
     this.storeMessage = '';
     this.storeError = '';
-    this.businessApi.createStore(this.storeForm.getRawValue()).subscribe({
+    this.businessApi.createStoreWithLogo(this.storeForm.getRawValue(), this.storeLogoFile).subscribe({
       next: () => {
         this.savingStore = false;
-        this.storeMessage = 'Shop created.';
+        this.storeMessage = this.storeLogoFile ? 'Shop created with logo.' : 'Shop created.';
         this.storeForm.reset({ name: '', address: '', phone: '', description: '' });
+        this.clearStoreLogo();
         this.reloadAll();
       },
       error: (err: Error) => {
         this.savingStore = false;
         this.storeError = err.message || 'Could not create store.';
+      },
+    });
+  }
+
+  uploadLogoForShop(shopId: string, event: Event): void {
+    const file = this.fileFromEvent(event);
+    if (!file) return;
+    this.uploadingLogoId = shopId;
+    this.storeError = '';
+    this.businessApi.uploadShopLogo(shopId, file).subscribe({
+      next: () => {
+        this.uploadingLogoId = '';
+        this.storeMessage = 'Logo updated.';
+        this.reloadAll();
+      },
+      error: (err: Error) => {
+        this.uploadingLogoId = '';
+        this.storeError = err.message || 'Could not upload logo.';
       },
     });
   }
@@ -366,14 +505,19 @@ export class BusinessDashboardComponent implements OnInit {
     this.offerError = '';
     const value = this.offerForm.getRawValue();
     this.businessApi
-      .createOffer({
-        ...value,
-        discountPercent: Number(value.discountPercent),
-      })
+      .createOfferWithImage(
+        {
+          ...value,
+          discountPercent: Number(value.discountPercent),
+        },
+        this.offerImageFile,
+      )
       .subscribe({
         next: (offer) => {
           this.savingOffer = false;
-          this.offerMessage = `Offer “${offer.title}” created (${offer.status}).`;
+          this.offerMessage = this.offerImageFile
+            ? `Offer “${offer.title}” created with image (${offer.status}).`
+            : `Offer “${offer.title}” created (${offer.status}).`;
           this.offerForm.patchValue({
             title: '',
             description: '',
@@ -383,6 +527,7 @@ export class BusinessDashboardComponent implements OnInit {
             endDate: this.plusDays(30),
             status: 'ACTIVE',
           });
+          this.clearOfferImage();
           this.reloadAll();
           this.activeTab = 'offers';
         },
@@ -391,6 +536,24 @@ export class BusinessDashboardComponent implements OnInit {
           this.offerError = err.message || 'Could not create offer.';
         },
       });
+  }
+
+  uploadImageForOffer(offerId: string, event: Event): void {
+    const file = this.fileFromEvent(event);
+    if (!file) return;
+    this.uploadingOfferImageId = offerId;
+    this.offerError = '';
+    this.businessApi.uploadOfferImage(offerId, file).subscribe({
+      next: () => {
+        this.uploadingOfferImageId = '';
+        this.offerMessage = 'Offer image updated.';
+        this.reloadOffers();
+      },
+      error: (err: Error) => {
+        this.uploadingOfferImageId = '';
+        this.offerError = err.message || 'Could not upload offer image.';
+      },
+    });
   }
 
   setStatus(id: string, status: string): void {
@@ -405,6 +568,25 @@ export class BusinessDashboardComponent implements OnInit {
       next: () => this.reloadAll(),
       error: () => (this.offerError = 'Could not delete offer.'),
     });
+  }
+
+  private fileFromEvent(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    input.value = '';
+    return file;
+  }
+
+  private clearStoreLogo(): void {
+    if (this.storeLogoPreview) URL.revokeObjectURL(this.storeLogoPreview);
+    this.storeLogoFile = null;
+    this.storeLogoPreview = '';
+  }
+
+  private clearOfferImage(): void {
+    if (this.offerImagePreview) URL.revokeObjectURL(this.offerImagePreview);
+    this.offerImageFile = null;
+    this.offerImagePreview = '';
   }
 
   private today(): string {
