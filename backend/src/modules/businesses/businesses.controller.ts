@@ -34,7 +34,7 @@ export class BusinessesController {
     return this.businessesService.register(dto);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Get()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'List businesses (admin)' })
@@ -42,7 +42,7 @@ export class BusinessesController {
     return this.businessesService.findAll(query);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Get('mine')
   @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get my business' })
@@ -50,14 +50,14 @@ export class BusinessesController {
     return this.businessesService.findMine(userId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Get(':id')
   @ApiOperation({ summary: 'Get business by id' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.businessesService.findOne(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Update business' })
@@ -70,7 +70,7 @@ export class BusinessesController {
     return this.businessesService.update(id, dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id/status')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Approve / reject / suspend business' })
@@ -82,7 +82,7 @@ export class BusinessesController {
     return this.businessesService.updateStatus(id, dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Soft delete business' })

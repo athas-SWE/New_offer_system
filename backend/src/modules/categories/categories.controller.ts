@@ -35,7 +35,7 @@ export class CategoriesController {
     return this.categoriesService.findOne(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create category' })
@@ -43,7 +43,7 @@ export class CategoriesController {
     return this.categoriesService.create(dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update category' })
@@ -55,7 +55,7 @@ export class CategoriesController {
     return this.categoriesService.update(id, dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Soft delete category' })

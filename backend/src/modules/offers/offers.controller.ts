@@ -40,7 +40,7 @@ export class OffersController {
     return this.offersService.findAll(query, true);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Get('manage')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'List all offers for management' })
@@ -58,7 +58,7 @@ export class OffersController {
     return this.offersService.incrementView(id, userId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Create offer' })
@@ -70,7 +70,7 @@ export class OffersController {
     return this.offersService.create(dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Update offer' })
@@ -83,7 +83,7 @@ export class OffersController {
     return this.offersService.update(id, dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Soft delete offer' })
@@ -95,7 +95,7 @@ export class OffersController {
     return this.offersService.remove(id, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post(':id/images')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiConsumes('multipart/form-data')

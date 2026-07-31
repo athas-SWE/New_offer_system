@@ -6,7 +6,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 
 @ApiTags('Reports')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}

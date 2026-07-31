@@ -7,9 +7,21 @@ import { Business } from '../businesses/entities/business.entity';
 import { Offer } from '../offers/entities/offer.entity';
 import { Store } from '../stores/entities/store.entity';
 import { Review } from '../reviews/entities/review.entity';
+import { Favorite } from '../favorites/entities/favorite.entity';
+import { Notification } from '../notifications/entities/notification.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Business, Offer, Store, Review])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Business,
+      Offer,
+      Store,
+      Review,
+      Favorite,
+      Notification,
+    ]),
+  ],
   controllers: [DashboardController],
   providers: [DashboardService],
 })

@@ -40,7 +40,7 @@ export class LocationsController {
     return this.locationsService.findDistrict(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post('districts')
   @Roles(UserRole.ADMIN)
   createDistrict(
@@ -50,7 +50,7 @@ export class LocationsController {
     return this.locationsService.createDistrict(dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put('districts/:id')
   @Roles(UserRole.ADMIN)
   updateDistrict(
@@ -61,7 +61,7 @@ export class LocationsController {
     return this.locationsService.updateDistrict(id, dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete('districts/:id')
   @Roles(UserRole.ADMIN)
   removeDistrict(
@@ -84,14 +84,14 @@ export class LocationsController {
     return this.locationsService.findCity(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post('cities')
   @Roles(UserRole.ADMIN)
   createCity(@Body() dto: CreateCityDto, @CurrentUser('id') actorId: string) {
     return this.locationsService.createCity(dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put('cities/:id')
   @Roles(UserRole.ADMIN)
   updateCity(
@@ -102,7 +102,7 @@ export class LocationsController {
     return this.locationsService.updateCity(id, dto, actorId);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete('cities/:id')
   @Roles(UserRole.ADMIN)
   removeCity(

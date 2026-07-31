@@ -1,0 +1,319 @@
+// Offer Lanka — Prisma schema (MySQL)
+// Run: npx prisma migrate dev --name initial_migrate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  BUSINESS_OWNER
+  CUSTOMER
+}
+
+enum BusinessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OfferStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  EXPIRED
+  REJECTED
+  INACTIVE
+}
+
+enum NotificationType {
+  SYSTEM
+  OFFER
+  REVIEW
+  BUSINESS
+  PROMO
+}
+
+model Role {
+  id          String    @id @default(uuid()) @db.Char(36)
+  name        RoleName  @unique
+  description String?   @db.VarChar(255)
+  createdBy   String?   @map("created_by") @db.VarChar(36)
+  updatedBy   String?   @map("updated_by") @db.VarChar(36)
+  createdDate DateTime  @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime  @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  users       User[]
+
+  @@map("roles")
+}
+
+model District {
+  id          String    @id @default(uuid()) @db.Char(36)
+  name        String    @db.VarChar(120)
+  slug        String    @unique @db.VarChar(140)
+  province    String?   @db.VarChar(120)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdBy   String?   @map("created_by") @db.VarChar(36)
+  updatedBy   String?   @map("updated_by") @db.VarChar(36)
+  createdDate DateTime  @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime  @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  cities      City[]
+
+  @@map("districts")
+}
+
+model City {
+  id          String     @id @default(uuid()) @db.Char(36)
+  name        String     @db.VarChar(120)
+  slug        String     @unique @db.VarChar(140)
+  isActive    Boolean    @default(true) @map("is_active")
+  districtId  String     @map("district_id") @db.Char(36)
+  createdBy   String?    @map("created_by") @db.VarChar(36)
+  updatedBy   String?    @map("updated_by") @db.VarChar(36)
+  createdDate DateTime   @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime   @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean    @default(false) @map("is_deleted")
+  district    District   @relation(fields: [districtId], references: [id])
+  businesses  Business[]
+  stores      Store[]
+  offers      Offer[]
+
+  @@map("cities")
+}
+
+model User {
+  id               String         @id @default(uuid()) @db.Char(36)
+  name             String         @db.VarChar(150)
+  email            String         @unique @db.VarChar(180)
+  passwordHash     String         @map("password_hash") @db.VarChar(255)
+  phone            String?        @db.VarChar(30)
+  avatarUrl        String?        @map("avatar_url") @db.VarChar(500)
+  isActive         Boolean        @default(true) @map("is_active")
+  refreshTokenHash String?        @map("refresh_token_hash") @db.VarChar(255)
+  fcmToken         String?        @map("fcm_token") @db.VarChar(512)
+  roleId           String         @map("role_id") @db.Char(36)
+  createdBy        String?        @map("created_by") @db.VarChar(36)
+  updatedBy        String?        @map("updated_by") @db.VarChar(36)
+  createdDate      DateTime       @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate      DateTime       @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted        Boolean        @default(false) @map("is_deleted")
+  role             Role           @relation(fields: [roleId], references: [id])
+  business         Business?
+  favorites        Favorite[]
+  notifications    Notification[]
+  reviews          Review[]
+
+  @@map("users")
+}
+
+model Business {
+  id                 String         @id @default(uuid()) @db.Char(36)
+  name               String         @db.VarChar(200)
+  description        String?        @db.Text
+  registrationNumber String?        @map("registration_number") @db.VarChar(100)
+  email              String?        @db.VarChar(180)
+  phone              String?        @db.VarChar(30)
+  address            String?        @db.VarChar(500)
+  logoUrl            String?        @map("logo_url") @db.VarChar(500)
+  status             BusinessStatus @default(PENDING)
+  ownerId            String         @unique @map("owner_id") @db.Char(36)
+  cityId             String?        @map("city_id") @db.Char(36)
+  createdBy          String?        @map("created_by") @db.VarChar(36)
+  updatedBy          String?        @map("updated_by") @db.VarChar(36)
+  createdDate        DateTime       @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate        DateTime       @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted          Boolean        @default(false) @map("is_deleted")
+  owner              User           @relation(fields: [ownerId], references: [id])
+  city               City?          @relation(fields: [cityId], references: [id])
+  stores             Store[]
+  offers             Offer[]
+
+  @@map("businesses")
+}
+
+model Store {
+  id          String    @id @default(uuid()) @db.Char(36)
+  name        String    @db.VarChar(200)
+  description String?   @db.Text
+  address     String?   @db.VarChar(500)
+  phone       String?   @db.VarChar(30)
+  latitude    Decimal?  @db.Decimal(10, 7)
+  longitude   Decimal?  @db.Decimal(10, 7)
+  isActive    Boolean   @default(true) @map("is_active")
+  businessId  String    @map("business_id") @db.Char(36)
+  cityId      String?   @map("city_id") @db.Char(36)
+  createdBy   String?   @map("created_by") @db.VarChar(36)
+  updatedBy   String?   @map("updated_by") @db.VarChar(36)
+  createdDate DateTime  @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime  @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  business    Business  @relation(fields: [businessId], references: [id])
+  city        City?     @relation(fields: [cityId], references: [id])
+
+  @@map("stores")
+}
+
+model Category {
+  id          String     @id @default(uuid()) @db.Char(36)
+  name        String     @db.VarChar(150)
+  slug        String     @unique @db.VarChar(160)
+  description String?    @db.Text
+  iconUrl     String?    @map("icon_url") @db.VarChar(500)
+  sortOrder   Int        @default(0) @map("sort_order")
+  isActive    Boolean    @default(true) @map("is_active")
+  parentId    String?    @map("parent_id") @db.Char(36)
+  createdBy   String?    @map("created_by") @db.VarChar(36)
+  updatedBy   String?    @map("updated_by") @db.VarChar(36)
+  createdDate DateTime   @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime   @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean    @default(false) @map("is_deleted")
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  offers      Offer[]
+
+  @@map("categories")
+}
+
+model Offer {
+  id              String        @id @default(uuid()) @db.Char(36)
+  title           String        @db.VarChar(250)
+  description     String?       @db.Text
+  discountPercent Decimal       @default(0) @map("discount_percent") @db.Decimal(5, 2)
+  startDate       DateTime      @map("start_date")
+  endDate         DateTime      @map("end_date")
+  couponCode      String?       @map("coupon_code") @db.VarChar(50)
+  image           String?       @db.VarChar(500)
+  latitude        Decimal?      @db.Decimal(10, 7)
+  longitude       Decimal?      @db.Decimal(10, 7)
+  qrCode          String?       @map("qr_code") @db.VarChar(500)
+  views           Int           @default(0)
+  likes           Int           @default(0)
+  status          OfferStatus   @default(DRAFT)
+  businessId      String        @map("business_id") @db.Char(36)
+  categoryId      String?       @map("category_id") @db.Char(36)
+  cityId          String?       @map("city_id") @db.Char(36)
+  createdBy       String?       @map("created_by") @db.VarChar(36)
+  updatedBy       String?       @map("updated_by") @db.VarChar(36)
+  createdDate     DateTime      @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate     DateTime      @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted       Boolean       @default(false) @map("is_deleted")
+  business        Business      @relation(fields: [businessId], references: [id])
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  city            City?         @relation(fields: [cityId], references: [id])
+  images          OfferImage[]
+  favorites       Favorite[]
+  reviews         Review[]
+
+  @@map("offers")
+}
+
+model OfferImage {
+  id          String   @id @default(uuid()) @db.Char(36)
+  imageUrl    String   @map("image_url") @db.VarChar(500)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  offerId     String   @map("offer_id") @db.Char(36)
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("offer_images")
+}
+
+model Favorite {
+  id          String   @id @default(uuid()) @db.Char(36)
+  userId      String   @map("user_id") @db.Char(36)
+  offerId     String   @map("offer_id") @db.Char(36)
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, offerId], map: "uq_favorites_user_offer")
+  @@map("favorites")
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Char(36)
+  title       String           @db.VarChar(200)
+  message     String           @db.Text
+  type        NotificationType @default(SYSTEM)
+  isRead      Boolean          @default(false) @map("is_read")
+  referenceId String?          @map("reference_id") @db.VarChar(36)
+  userId      String           @map("user_id") @db.Char(36)
+  createdBy   String?          @map("created_by") @db.VarChar(36)
+  updatedBy   String?          @map("updated_by") @db.VarChar(36)
+  createdDate DateTime         @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime         @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean          @default(false) @map("is_deleted")
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Review {
+  id          String   @id @default(uuid()) @db.Char(36)
+  rating      Int
+  comment     String?  @db.Text
+  isApproved  Boolean  @default(true) @map("is_approved")
+  userId      String   @map("user_id") @db.Char(36)
+  offerId     String   @map("offer_id") @db.Char(36)
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Analytics {
+  id          String   @id @default(uuid()) @db.Char(36)
+  eventType   String   @map("event_type") @db.VarChar(80)
+  entityType  String?  @map("entity_type") @db.VarChar(80)
+  entityId    String?  @map("entity_id") @db.VarChar(36)
+  userId      String?  @map("user_id") @db.VarChar(36)
+  businessId  String?  @map("business_id") @db.VarChar(36)
+  metadata    Json?
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  @@map("analytics")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Char(36)
+  action      String   @db.VarChar(80)
+  entityType  String   @map("entity_type") @db.VarChar(80)
+  entityId    String?  @map("entity_id") @db.VarChar(36)
+  userId      String?  @map("user_id") @db.VarChar(36)
+  changes     Json?
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdBy   String?  @map("created_by") @db.VarChar(36)
+  updatedBy   String?  @map("updated_by") @db.VarChar(36)
+  createdDate DateTime @default(now()) @map("created_date") @db.DateTime(6)
+  updatedDate DateTime @default(now()) @updatedAt @map("updated_date") @db.DateTime(6)
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  @@map("audit_logs")
+}

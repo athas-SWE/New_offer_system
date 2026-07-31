@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, of, throwError, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../models';
 
@@ -31,10 +32,16 @@ export class AuthService {
   login(payload: LoginRequest): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/auth/login', payload).pipe(
       tap((res) => this.persistSession(res)),
-      catchError(() => {
-        const demo = this.buildDemoSession(payload.email, 'CUSTOMER');
-        this.persistSession(demo);
-        return of(demo);
+      catchError((err: HttpErrorResponse) => {
+        // Offline-only demo fallback — do not mask real API auth errors
+        if (err.status === 0) {
+          const demo = this.buildDemoSession(payload.email, 'CUSTOMER');
+          this.persistSession(demo);
+          return of(demo);
+        }
+        return throwError(
+          () => new Error((err.error as { message?: string })?.message || 'Login failed')
+        );
       })
     );
   }
@@ -42,14 +49,19 @@ export class AuthService {
   register(payload: RegisterRequest): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/auth/register', payload).pipe(
       tap((res) => this.persistSession(res)),
-      catchError(() => {
-        const demo = this.buildDemoSession(
-          payload.email,
-          payload.role ?? 'CUSTOMER',
-          payload.name
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 0) {
+          const demo = this.buildDemoSession(
+            payload.email,
+            payload.role ?? 'CUSTOMER',
+            payload.name
+          );
+          this.persistSession(demo);
+          return of(demo);
+        }
+        return throwError(
+          () => new Error((err.error as { message?: string })?.message || 'Registration failed')
         );
-        this.persistSession(demo);
-        return of(demo);
       })
     );
   }
@@ -73,11 +85,16 @@ export class AuthService {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         this.currentUserSubject.next(user);
       }),
-      catchError(() => {
-        const merged = { ...(this.currentUser as User), ...patch };
-        localStorage.setItem(USER_KEY, JSON.stringify(merged));
-        this.currentUserSubject.next(merged);
-        return of(merged);
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 0 && this.currentUser) {
+          const merged = { ...this.currentUser, ...patch };
+          localStorage.setItem(USER_KEY, JSON.stringify(merged));
+          this.currentUserSubject.next(merged);
+          return of(merged);
+        }
+        return throwError(
+          () => new Error((err.error as { message?: string })?.message || 'Update failed')
+        );
       })
     );
   }
@@ -109,7 +126,9 @@ export class AuthService {
       ? 'ADMIN'
       : lower.includes('business')
         ? 'BUSINESS_OWNER'
-        : role;
+        : lower.includes('shopper') || lower.includes('customer')
+          ? 'CUSTOMER'
+          : role;
     return {
       accessToken: `demo-jwt-${Date.now()}`,
       refreshToken: `demo-refresh-${Date.now()}`,

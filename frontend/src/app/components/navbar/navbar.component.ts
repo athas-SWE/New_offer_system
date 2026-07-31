@@ -50,7 +50,10 @@ import { NotificationsService } from '../../services/notifications.service';
               <a routerLink="/admin" class="btn-primary !px-3 !py-2 text-xs">Admin</a>
             }
             @if (user.role === 'BUSINESS_OWNER') {
-              <a routerLink="/business" class="btn-primary !px-3 !py-2 text-xs">Dashboard</a>
+              <a routerLink="/business" class="btn-primary !px-3 !py-2 text-xs">Business</a>
+            }
+            @if (user.role === 'CUSTOMER') {
+              <a routerLink="/dashboard" class="btn-primary !px-3 !py-2 text-xs">My deals</a>
             }
           </ng-container>
           <ng-template #guest>

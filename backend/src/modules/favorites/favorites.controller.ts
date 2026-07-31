@@ -13,7 +13,7 @@ import { CreateFavoriteDto } from './dto/favorite.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Favorites')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('favorites')
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}

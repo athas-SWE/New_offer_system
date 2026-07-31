@@ -36,7 +36,7 @@ export class StoresController {
     return this.storesService.findOne(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Create store' })
@@ -48,7 +48,7 @@ export class StoresController {
     return this.storesService.create(dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Update store' })
@@ -61,7 +61,7 @@ export class StoresController {
     return this.storesService.update(id, dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiOperation({ summary: 'Soft delete store' })

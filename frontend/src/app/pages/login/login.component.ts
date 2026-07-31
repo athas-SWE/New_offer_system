@@ -37,7 +37,7 @@ import { AuthService } from '../../services/auth.service';
           <a routerLink="/register" class="font-semibold text-teal-700 hover:underline">Create an account</a>
         </p>
         <p class="mt-2 text-center text-xs text-[var(--color-muted)]">
-          Tip: use an email with “admin” or “business” for role dashboards when offline.
+          Tip: admin&#64;offerlanka.lk · business&#64;offerlanka.lk · shopper&#64;offerlanka.lk
         </p>
       </div>
     </div>
@@ -74,7 +74,7 @@ export class LoginComponent {
         } else if (res.user.role === 'BUSINESS_OWNER') {
           void this.router.navigate(['/business']);
         } else {
-          void this.router.navigate(['/']);
+          void this.router.navigate(['/dashboard']);
         }
       },
       error: (err: Error) => {

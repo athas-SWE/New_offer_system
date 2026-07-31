@@ -33,14 +33,14 @@ export class ReviewsController {
     return this.reviewsService.findOne(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Post()
   @ApiOperation({ summary: 'Create review' })
   create(@CurrentUser('id') userId: string, @Body() dto: CreateReviewDto) {
     return this.reviewsService.create(userId, dto);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -51,7 +51,7 @@ export class ReviewsController {
     return this.reviewsService.update(id, dto, actorId, role);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @Delete(':id')
   remove(
     @Param('id', ParseUUIDPipe) id: string,

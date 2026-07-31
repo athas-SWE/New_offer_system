@@ -6,7 +6,7 @@ import { UserRole } from '../../common/enums/role.enum';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Analytics')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}

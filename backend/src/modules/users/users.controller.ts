@@ -17,7 +17,7 @@ import { UserRole } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Users')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

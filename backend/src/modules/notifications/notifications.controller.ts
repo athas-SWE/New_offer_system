@@ -12,7 +12,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Notifications')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}

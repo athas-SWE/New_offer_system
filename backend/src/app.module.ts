@@ -50,14 +50,8 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'mysql',
-        host: config.get<string>('DB_HOST', 'localhost'),
-        port: Number(config.get('DB_PORT', 3306)),
-        username: config.get<string>('DB_USERNAME', 'root'),
-        password: config.get<string>('DB_PASSWORD', ''),
-        database: config.get<string>('DB_DATABASE', 'offer_lanka'),
-        entities: [
+      useFactory: (config: ConfigService) => {
+        const entities = [
           User,
           Role,
           Business,
@@ -72,11 +66,46 @@ import { AuditLog } from './modules/analytics/entities/audit-log.entity';
           District,
           Analytics,
           AuditLog,
-        ],
-        synchronize: false,
-        logging: config.get('NODE_ENV') === 'development',
-        timezone: 'Z',
-      }),
+        ];
+
+        const databaseUrl = config.get<string>('DATABASE_URL');
+        if (databaseUrl) {
+          const parsed = new URL(databaseUrl);
+          const sslMode = (
+            parsed.searchParams.get('ssl-mode') ||
+            parsed.searchParams.get('sslmode') ||
+            ''
+          ).toUpperCase();
+          const sslRequired = ['REQUIRED', 'VERIFY_CA', 'VERIFY_IDENTITY'].includes(sslMode);
+
+          return {
+            type: 'mysql' as const,
+            host: parsed.hostname,
+            port: Number(parsed.port || 3306),
+            username: decodeURIComponent(parsed.username),
+            password: decodeURIComponent(parsed.password),
+            database: parsed.pathname.replace(/^\//, ''),
+            ssl: sslRequired ? { rejectUnauthorized: false } : undefined,
+            entities,
+            synchronize: false,
+            logging: config.get('NODE_ENV') === 'development',
+            timezone: 'Z',
+          };
+        }
+
+        return {
+          type: 'mysql' as const,
+          host: config.get<string>('DB_HOST', 'localhost'),
+          port: Number(config.get('DB_PORT', 3306)),
+          username: config.get<string>('DB_USERNAME', 'root'),
+          password: config.get<string>('DB_PASSWORD', 'root'),
+          database: config.get<string>('DB_DATABASE', 'offer_lanka'),
+          entities,
+          synchronize: false,
+          logging: config.get('NODE_ENV') === 'development',
+          timezone: 'Z',
+        };
+      },
     }),
     AuthModule,
     UsersModule,

@@ -82,8 +82,10 @@ export class RegisterComponent {
         this.loading = false;
         if (res.user.role === 'BUSINESS_OWNER') {
           void this.router.navigate(['/business']);
+        } else if (res.user.role === 'ADMIN') {
+          void this.router.navigate(['/admin']);
         } else {
-          void this.router.navigate(['/']);
+          void this.router.navigate(['/dashboard']);
         }
       },
       error: (err: Error) => {

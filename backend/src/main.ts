@@ -22,7 +22,22 @@ async function bootstrap() {
   }
 
   app.setGlobalPrefix('api');
-  app.use(helmet());
+
+  // Helmet with CSP relaxed enough for Swagger UI assets
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+          scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   app.enableCors({
     origin: (configService.get<string>('CORS_ORIGIN') || '*')
       .split(',')
@@ -41,21 +56,86 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useStaticAssets(join(process.cwd(), uploadDest), { prefix: '/uploads' });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Offer Lanka API')
-    .setDescription('Production API for Offer Lanka SaaS')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  const swaggerEnabled =
+    configService.get<string>('SWAGGER_ENABLED', 'true') !== 'false';
+
+  if (swaggerEnabled) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Offer Lanka API')
+      .setDescription(
+        [
+          'Sri Lanka daily offers platform REST API.',
+          '',
+          '### Auth',
+          '1. Call `POST /api/auth/login`',
+          '2. Copy `accessToken` from the response',
+          '3. Click **Authorize** and paste: `Bearer <accessToken>` or just the token',
+          '',
+          '### Roles',
+          '`ADMIN` · `BUSINESS_OWNER` · `CUSTOMER`',
+          '',
+          'Default seeded admin: `admin@offerlanka.lk` / `Admin@12345`',
+        ].join('\n'),
+      )
+      .setVersion('1.0')
+      .addServer('http://localhost:3000', 'Local')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'Authorization',
+          description: 'Paste the JWT access token from /api/auth/login',
+          in: 'header',
+        },
+        'access-token',
+      )
+      .addTag('Auth', 'Register, login, refresh, logout')
+      .addTag('Users', 'User management')
+      .addTag('Businesses', 'Business registration and approval')
+      .addTag('Stores', 'Store CRUD')
+      .addTag('Offers', 'Offer CRUD, images, search')
+      .addTag('Categories', 'Offer categories')
+      .addTag('Locations', 'Cities and districts')
+      .addTag('Favorites', 'Customer saved offers')
+      .addTag('Reviews', 'Offer reviews')
+      .addTag('Notifications', 'In-app notifications')
+      .addTag('Analytics', 'Event tracking')
+      .addTag('Dashboard', 'Admin and business metrics')
+      .addTag('Reports', 'PDF / Excel exports')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig, {
+      deepScanRoutes: true,
+      operationIdFactory: (controllerKey: string, methodKey: string) =>
+        `${controllerKey}_${methodKey}`,
+    });
+
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        docExpansion: 'none',
+        filter: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+        displayRequestDuration: true,
+      },
+      customSiteTitle: 'Offer Lanka API Docs',
+      customCss: '.swagger-ui .topbar { display: none }',
+      jsonDocumentUrl: 'api/docs-json',
+    });
+  }
 
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`Offer Lanka API running on http://localhost:${port}/api`);
-  // eslint-disable-next-line no-console
-  console.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  if (swaggerEnabled) {
+    // eslint-disable-next-line no-console
+    console.log(`Swagger UI → http://localhost:${port}/api/docs`);
+    // eslint-disable-next-line no-console
+    console.log(`OpenAPI JSON → http://localhost:${port}/api/docs-json`);
+  }
 }
 
 bootstrap();

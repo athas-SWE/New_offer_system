@@ -70,6 +70,14 @@ export const routes: Routes = [
       import('./pages/admin-dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent),
   },
   {
+    path: 'dashboard',
+    canActivate: [authGuard, roleGuard('CUSTOMER', 'ADMIN')],
+    loadComponent: () =>
+      import('./pages/shopper-dashboard/shopper-dashboard.component').then(
+        (m) => m.ShopperDashboardComponent
+      ),
+  },
+  {
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
