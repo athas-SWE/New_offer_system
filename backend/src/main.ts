@@ -3,8 +3,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import { existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -12,13 +10,6 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
-
-  const uploadDest = configService.get<string>('UPLOAD_DEST', './uploads');
-  for (const dir of [uploadDest, join(uploadDest, 'offers'), join(uploadDest, 'shops')]) {
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-  }
 
   app.setGlobalPrefix('api');
 
@@ -29,7 +20,14 @@ async function bootstrap() {
         directives: {
           defaultSrc: [`'self'`],
           styleSrc: [`'self'`, `'unsafe-inline'`],
-          imgSrc: [`'self'`, 'data:', 'blob:', 'validator.swagger.io', 'http://localhost:4200'],
+          imgSrc: [
+            `'self'`,
+            'data:',
+            'blob:',
+            'validator.swagger.io',
+            'http://localhost:4200',
+            'https://res.cloudinary.com',
+          ],
           scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
         },
       },
@@ -53,7 +51,6 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useStaticAssets(join(process.cwd(), uploadDest), { prefix: '/uploads' });
 
   const swaggerEnabled =
     configService.get<string>('SWAGGER_ENABLED', 'true') !== 'false';

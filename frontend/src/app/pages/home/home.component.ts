@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OffersService } from '../../services/offers.service';
-import { CategoriesService } from '../../services/categories.service';
 import { HeroSlidesService } from '../../services/hero-slides.service';
 import { HeroSlide } from '../../services/admin.service';
-import { Offer, Category } from '../../models';
+import { Offer } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
 import { MatIconModule } from '@angular/material/icon';
@@ -123,61 +122,10 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
       }
     </section>
-
-    <section class="page-shell pt-0">
-      <h2 class="section-title">Shop by category</h2>
-      <p class="section-sub">Find the right kind of deal faster.</p>
-      <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @for (cat of categories; track cat.id) {
-          <a
-            [routerLink]="['/offers']"
-            [queryParams]="{ categoryId: cat.id }"
-            class="surface-panel flex items-start gap-4 transition hover:-translate-y-1 hover:shadow-lift"
-          >
-            <span
-              class="flex h-12 w-12 items-center justify-center rounded-xl text-white"
-              [style.background]="cat.color || '#0d9488'"
-            >
-              <mat-icon>{{ cat.icon }}</mat-icon>
-            </span>
-            <div>
-              <h3 class="font-display text-lg font-semibold text-teal-900">{{ cat.name }}</h3>
-              <p class="mt-1 text-sm text-[var(--color-muted)]">{{ cat.description }}</p>
-              <p class="mt-2 text-xs font-semibold text-teal-600">{{ cat.offerCount }} offers</p>
-            </div>
-          </a>
-        }
-      </div>
-    </section>
-
-    <section class="page-shell pt-0">
-      <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-teal-700 to-teal-900 px-6 py-10 text-white sm:px-10">
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 class="font-display text-3xl font-semibold">Nearby offers</h2>
-            <p class="mt-2 max-w-xl text-teal-100">
-              Enable location to see deals around your area — Colombo today, your city next.
-            </p>
-          </div>
-          <button type="button" class="btn-gold" (click)="loadNearby()">
-            <mat-icon>near_me</mat-icon>
-            Show nearby
-          </button>
-        </div>
-        @if (nearby.length) {
-          <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            @for (offer of nearby; track offer.id) {
-              <app-offer-card [offer]="offer" />
-            }
-          </div>
-        }
-      </div>
-    </section>
   `,
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly offersService = inject(OffersService);
-  private readonly categoriesService = inject(CategoriesService);
   private readonly heroSlidesService = inject(HeroSlidesService);
 
   private readonly fallbackSlide: HeroSlide = {
@@ -191,8 +139,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   };
 
   featured: Offer[] = [];
-  nearby: Offer[] = [];
-  categories: Category[] = [];
   slides: HeroSlide[] = [this.fallbackSlide];
   activeSlide = 0;
   loading = true;
@@ -214,7 +160,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.featured = offers.slice(0, 3);
       this.loading = false;
     });
-    this.categoriesService.getCategories().subscribe((cats) => (this.categories = cats));
   }
 
   ngOnDestroy(): void {
@@ -242,29 +187,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     return !!link && /^https?:\/\//i.test(link);
   }
 
-  loadNearby(): void {
-    if (!navigator.geolocation) {
-      this.offersService.getNearby(6.9271, 79.8612).subscribe((offers) => (this.nearby = offers.slice(0, 3)));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        this.offersService
-          .getNearby(pos.coords.latitude, pos.coords.longitude)
-          .subscribe((offers) => (this.nearby = offers.slice(0, 3)));
-      },
-      () => {
-        this.offersService.getNearby(6.9271, 79.8612).subscribe((offers) => (this.nearby = offers.slice(0, 3)));
-      }
-    );
-  }
-
   private startSlideshow(): void {
     this.stopSlideshow();
     if (this.slides.length < 2) return;
     this.timer = setInterval(() => {
       this.activeSlide = (this.activeSlide + 1) % this.slides.length;
-    }, 6000);
+    }, 5000);
   }
 
   private stopSlideshow(): void {

@@ -20,6 +20,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { HeroSlidesModule } from './modules/hero-slides/hero-slides.module';
 import { SeedModule } from './seed/seed.module';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 
 import { User } from './modules/users/entities/user.entity';
 import { Role } from './modules/users/entities/role.entity';
@@ -39,6 +40,7 @@ import { HeroSlide } from './modules/hero-slides/entities/hero-slide.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    CloudinaryModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [

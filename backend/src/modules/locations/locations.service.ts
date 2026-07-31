@@ -101,7 +101,7 @@ export class LocationsService {
   }
 
   async findCities(districtId?: string) {
-    const where: Record<string, unknown> = { isDeleted: false };
+    const where: Record<string, unknown> = { isDeleted: false, isActive: true };
     if (districtId) where.districtId = districtId;
     return this.cityRepo.find({
       where,

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,19 +8,33 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HeroSlidesService } from './hero-slides.service';
 import { CreateHeroSlideDto, UpdateHeroSlideDto } from './dto/hero-slide.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
+import { multerImageOptions } from '../../common/upload/multer.options';
 
 @ApiTags('Hero Slides')
 @Controller('hero-slides')
 export class HeroSlidesController {
-  constructor(private readonly heroSlidesService: HeroSlidesService) {}
+  constructor(
+    private readonly heroSlidesService: HeroSlidesService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
   @Public()
   @Get()
@@ -39,12 +54,59 @@ export class HeroSlidesController {
   @ApiBearerAuth('access-token')
   @Post()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create hero slide' })
-  create(
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'file'],
+      properties: {
+        title: { type: 'string' },
+        subtitle: { type: 'string' },
+        ctaLabel: { type: 'string' },
+        ctaLink: { type: 'string' },
+        sortOrder: { type: 'integer' },
+        isActive: { type: 'boolean' },
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', multerImageOptions('hero')))
+  @ApiOperation({ summary: 'Create hero slide (upload image to Cloudinary)' })
+  async create(
+    @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateHeroSlideDto,
     @CurrentUser('id') actorId: string,
   ) {
-    return this.heroSlidesService.create(dto, actorId);
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+    const imageUrl = await this.cloudinary.uploadImage(file, 'hero');
+    return this.heroSlidesService.create({ ...dto, imageUrl }, actorId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post(':id/image')
+  @Roles(UserRole.ADMIN)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', multerImageOptions('hero')))
+  @ApiOperation({ summary: 'Replace hero slide image (Cloudinary)' })
+  async uploadImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') actorId: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+    const imageUrl = await this.cloudinary.uploadImage(file, 'hero');
+    return this.heroSlidesService.update(id, { imageUrl }, actorId);
   }
 
   @ApiBearerAuth('access-token')

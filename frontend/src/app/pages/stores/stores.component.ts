@@ -35,6 +35,9 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
                     }
                   </div>
                   <p class="text-sm text-[var(--color-muted)]">{{ store.city }}</p>
+                  @if (store.ownerName) {
+                    <p class="text-xs text-teal-700">Owner: {{ store.ownerName }}</p>
+                  }
                   <p class="mt-1 text-xs font-semibold text-gold-600">
                     @if (store.rating) {
                       ★ {{ store.rating }} ·

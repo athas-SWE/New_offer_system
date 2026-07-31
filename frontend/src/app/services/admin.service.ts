@@ -121,16 +121,30 @@ export class AdminService {
     return this.api.get<HeroSlide[]>('/hero-slides/manage');
   }
 
-  createHeroSlide(payload: {
-    title: string;
-    subtitle?: string;
-    imageUrl: string;
-    ctaLabel?: string;
-    ctaLink?: string;
-    sortOrder?: number;
-    isActive?: boolean;
-  }): Observable<HeroSlide> {
-    return this.api.post<HeroSlide>('/hero-slides', payload);
+  createHeroSlide(
+    payload: {
+      title: string;
+      subtitle?: string;
+      ctaLabel?: string;
+      ctaLink?: string;
+      sortOrder?: number;
+      isActive?: boolean;
+    },
+    image: File,
+  ): Observable<HeroSlide> {
+    const form = new FormData();
+    form.append('file', image, image.name);
+    form.append('title', payload.title);
+    if (payload.subtitle) form.append('subtitle', payload.subtitle);
+    if (payload.ctaLabel) form.append('ctaLabel', payload.ctaLabel);
+    if (payload.ctaLink) form.append('ctaLink', payload.ctaLink);
+    if (payload.sortOrder !== undefined) form.append('sortOrder', String(payload.sortOrder));
+    if (payload.isActive !== undefined) form.append('isActive', String(payload.isActive));
+    return this.api.postFormData<HeroSlide>('/hero-slides', form);
+  }
+
+  uploadHeroSlideImage(id: string, file: File): Observable<HeroSlide> {
+    return this.api.upload<HeroSlide>(`/hero-slides/${id}/image`, file);
   }
 
   updateHeroSlide(

@@ -13,6 +13,12 @@ import {
 } from '../../services/admin.service';
 import { DashboardOfferRow, DashboardStats } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import {
+  ACCEPTED_IMAGE_ACCEPT,
+  IMAGE_UPLOAD_HINT,
+  fileFromInputEvent,
+  validateImageFile,
+} from '../../utils/image-upload';
 
 type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users';
 
@@ -290,13 +296,22 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                 />
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium" for="heroImage">Image URL</label>
+                <label class="mb-1 block text-sm font-medium" for="heroImage">Hero image</label>
                 <input
                   id="heroImage"
-                  class="input-field"
-                  formControlName="imageUrl"
-                  placeholder="https://images.unsplash.com/..."
+                  type="file"
+                  [accept]="acceptedImageAccept"
+                  class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
+                  (change)="onHeroImageSelected($event)"
                 />
+                <p class="mt-1 text-xs text-[var(--color-muted)]">{{ imageUploadHint }}</p>
+                @if (heroImagePreview) {
+                  <img
+                    [src]="heroImagePreview"
+                    alt="Hero preview"
+                    class="mt-3 h-28 w-full max-w-md rounded-xl object-cover"
+                  />
+                }
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -318,7 +333,11 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                   Visible on home
                 </label>
               </div>
-              <button type="submit" class="btn-primary" [disabled]="heroForm.invalid || savingHero">
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="heroForm.invalid || !heroImageFile || savingHero"
+              >
                 {{ savingHero ? 'Saving…' : 'Add slide' }}
               </button>
             </form>
@@ -354,6 +373,18 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                         >
                           {{ slide.isActive === false ? 'Make visible' : 'Hide' }}
                         </button>
+                        <label
+                          class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs"
+                          [title]="imageUploadHint"
+                        >
+                          <input
+                            type="file"
+                            [accept]="acceptedImageAccept"
+                            class="sr-only"
+                            (change)="uploadHeroImage(slide.id, $event)"
+                          />
+                          {{ uploadingHeroImageId === slide.id ? 'Uploading…' : 'Change image' }}
+                        </label>
                         <button
                           type="button"
                           class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700"
@@ -435,6 +466,11 @@ export class AdminDashboardComponent implements OnInit {
   cards: { label: string; value: string }[] = [];
   savingCategory = false;
   savingHero = false;
+  heroImageFile: File | null = null;
+  heroImagePreview = '';
+  uploadingHeroImageId = '';
+  readonly acceptedImageAccept = ACCEPTED_IMAGE_ACCEPT;
+  readonly imageUploadHint = IMAGE_UPLOAD_HINT;
 
   categoryForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -445,7 +481,6 @@ export class AdminDashboardComponent implements OnInit {
   heroForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
     subtitle: [''],
-    imageUrl: ['', [Validators.required, Validators.minLength(8)]],
     ctaLabel: ['Browse offers'],
     ctaLink: ['/offers'],
     sortOrder: [0],
@@ -533,21 +568,46 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  onHeroImageSelected(event: Event): void {
+    const file = fileFromInputEvent(event);
+    if (this.heroImagePreview) URL.revokeObjectURL(this.heroImagePreview);
+    if (!file) {
+      this.heroImageFile = null;
+      this.heroImagePreview = '';
+      return;
+    }
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      this.heroImageFile = null;
+      this.heroImagePreview = '';
+      this.actionError = invalid;
+      return;
+    }
+    this.actionError = '';
+    this.heroImageFile = file;
+    this.heroImagePreview = URL.createObjectURL(file);
+  }
+
   createHeroSlide(): void {
-    if (this.heroForm.invalid) return;
+    if (this.heroForm.invalid || !this.heroImageFile) {
+      this.actionError = 'Please choose a hero image (max 5 MB)';
+      return;
+    }
     this.savingHero = true;
     this.actionError = '';
     const value = this.heroForm.getRawValue();
     this.admin
-      .createHeroSlide({
-        title: value.title,
-        subtitle: value.subtitle || undefined,
-        imageUrl: value.imageUrl,
-        ctaLabel: value.ctaLabel || undefined,
-        ctaLink: value.ctaLink || undefined,
-        sortOrder: Number(value.sortOrder) || 0,
-        isActive: value.isActive,
-      })
+      .createHeroSlide(
+        {
+          title: value.title,
+          subtitle: value.subtitle || undefined,
+          ctaLabel: value.ctaLabel || undefined,
+          ctaLink: value.ctaLink || undefined,
+          sortOrder: Number(value.sortOrder) || 0,
+          isActive: value.isActive,
+        },
+        this.heroImageFile,
+      )
       .subscribe({
         next: (slide) => {
           this.savingHero = false;
@@ -555,12 +615,12 @@ export class AdminDashboardComponent implements OnInit {
           this.heroForm.reset({
             title: '',
             subtitle: '',
-            imageUrl: '',
             ctaLabel: 'Browse offers',
             ctaLink: '/offers',
             sortOrder: 0,
             isActive: true,
           });
+          this.clearHeroImage();
           this.loadHeroSlides();
         },
         error: (err: Error) => {
@@ -568,6 +628,35 @@ export class AdminDashboardComponent implements OnInit {
           this.actionError = err.message || 'Could not create hero slide';
         },
       });
+  }
+
+  uploadHeroImage(id: string, event: Event): void {
+    const file = fileFromInputEvent(event);
+    if (!file) return;
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      this.actionError = invalid;
+      return;
+    }
+    this.uploadingHeroImageId = id;
+    this.actionError = '';
+    this.admin.uploadHeroSlideImage(id, file).subscribe({
+      next: () => {
+        this.uploadingHeroImageId = '';
+        this.actionMessage = 'Hero image updated';
+        this.loadHeroSlides();
+      },
+      error: (err: Error) => {
+        this.uploadingHeroImageId = '';
+        this.actionError = err.message || 'Could not upload hero image';
+      },
+    });
+  }
+
+  private clearHeroImage(): void {
+    if (this.heroImagePreview) URL.revokeObjectURL(this.heroImagePreview);
+    this.heroImageFile = null;
+    this.heroImagePreview = '';
   }
 
   toggleHeroVisible(slide: HeroSlide): void {

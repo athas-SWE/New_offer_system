@@ -1,9 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BusinessService } from '../../services/business.service';
+import { City, LocationsService } from '../../services/locations.service';
+import {
+  ACCEPTED_IMAGE_ACCEPT,
+  IMAGE_UPLOAD_HINT,
+  fileFromInputEvent,
+  validateImageFile,
+} from '../../utils/image-upload';
 
 @Component({
   selector: 'app-register',
@@ -46,6 +53,20 @@ import { BusinessService } from '../../services/business.service';
               </div>
             </div>
             <div>
+              <label class="mb-1 block text-sm font-medium text-teal-900" for="cityId">City</label>
+              <select id="cityId" class="input-field" formControlName="cityId">
+                <option value="">Select a city</option>
+                @for (city of cities; track city.id) {
+                  <option [value]="city.id">
+                    {{ cityLabel(city) }}
+                  </option>
+                }
+              </select>
+              @if (!cities.length) {
+                <p class="mt-1 text-xs text-[var(--color-muted)]">Loading cities…</p>
+              }
+            </div>
+            <div>
               <label class="mb-1 block text-sm font-medium text-teal-900" for="address">Address</label>
               <input id="address" class="input-field" formControlName="address" placeholder="Galle Road, Colombo 03" />
             </div>
@@ -54,10 +75,11 @@ import { BusinessService } from '../../services/business.service';
               <input
                 id="logo"
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
+                [accept]="acceptedImageAccept"
                 class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
                 (change)="onLogoSelected($event)"
               />
+              <p class="mt-1 text-xs text-[var(--color-muted)]">{{ imageUploadHint }}</p>
               @if (logoPreview) {
                 <img [src]="logoPreview" alt="Logo preview" class="mt-3 h-20 w-20 rounded-xl object-cover" />
               }
@@ -118,10 +140,11 @@ import { BusinessService } from '../../services/business.service';
     </div>
   `,
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly shops = inject(BusinessService);
+  private readonly locations = inject(LocationsService);
   private readonly router = inject(Router);
 
   loading = false;
@@ -129,12 +152,16 @@ export class RegisterComponent {
   success = '';
   logoFile: File | null = null;
   logoPreview = '';
+  cities: City[] = [];
+  readonly acceptedImageAccept = ACCEPTED_IMAGE_ACCEPT;
+  readonly imageUploadHint = IMAGE_UPLOAD_HINT;
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
     phone: [''],
     registrationNumber: [''],
+    cityId: ['', Validators.required],
     address: [''],
     ownerName: ['', [Validators.required, Validators.minLength(2)]],
     ownerEmail: ['', [Validators.required, Validators.email]],
@@ -142,12 +169,33 @@ export class RegisterComponent {
     ownerPhone: [''],
   });
 
+  ngOnInit(): void {
+    this.locations.getCities().subscribe((cities) => (this.cities = cities));
+  }
+
+  cityLabel(city: City): string {
+    const district = city.district?.name;
+    return district ? `${city.name} — ${district}` : city.name;
+  }
+
   onLogoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] || null;
+    const file = fileFromInputEvent(event);
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
+    if (!file) {
+      this.logoFile = null;
+      this.logoPreview = '';
+      return;
+    }
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      this.logoFile = null;
+      this.logoPreview = '';
+      this.error = invalid;
+      return;
+    }
+    this.error = '';
     this.logoFile = file;
-    this.logoPreview = file ? URL.createObjectURL(file) : '';
+    this.logoPreview = URL.createObjectURL(file);
   }
 
   submit(): void {
@@ -164,6 +212,7 @@ export class RegisterComponent {
         phone: value.phone || undefined,
         registrationNumber: value.registrationNumber || undefined,
         address: value.address || undefined,
+        cityId: value.cityId || undefined,
         ownerName: value.ownerName,
         ownerEmail: value.ownerEmail,
         ownerPassword: value.ownerPassword,

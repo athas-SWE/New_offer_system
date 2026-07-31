@@ -26,15 +26,16 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import {
-  multerImageOptions,
-  publicUploadPath,
-} from '../../common/upload/multer.options';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
+import { multerImageOptions } from '../../common/upload/multer.options';
 
 @ApiTags('Offers')
 @Controller('offers')
 export class OffersController {
-  constructor(private readonly offersService: OffersService) {}
+  constructor(
+    private readonly offersService: OffersService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
   @Public()
   @Get()
@@ -114,8 +115,8 @@ export class OffersController {
     },
   })
   @UseInterceptors(FileInterceptor('file', multerImageOptions('offers')))
-  @ApiOperation({ summary: 'Upload offer image' })
-  uploadImage(
+  @ApiOperation({ summary: 'Upload offer image to Cloudinary and save URL' })
+  async uploadImage(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser('id') actorId: string,
@@ -124,7 +125,7 @@ export class OffersController {
     if (!file) {
       throw new BadRequestException('Image file is required');
     }
-    const url = publicUploadPath('offers', file.filename);
+    const url = await this.cloudinary.uploadImage(file, 'offers');
     return this.offersService.addImage(id, url, actorId, role);
   }
 }

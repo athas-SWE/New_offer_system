@@ -4,10 +4,16 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  IsUrl,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+function toOptionalBoolean({ value }: { value: unknown }): boolean | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (value === true || value === 'true' || value === '1') return true;
+  if (value === false || value === 'false' || value === '0') return false;
+  return undefined;
+}
 
 export class CreateHeroSlideDto {
   @ApiProperty({ example: 'Weekend Food Fest' })
@@ -20,10 +26,11 @@ export class CreateHeroSlideDto {
   @IsString()
   subtitle?: string;
 
-  @ApiProperty({ example: 'https://images.unsplash.com/photo-xxx' })
+  /** Set by Cloudinary upload — not required from the client. */
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsUrl({ require_tld: false })
-  imageUrl: string;
+  imageUrl?: string;
 
   @ApiPropertyOptional({ example: 'Browse offers' })
   @IsOptional()
@@ -43,6 +50,7 @@ export class CreateHeroSlideDto {
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()
+  @Transform(toOptionalBoolean)
   @IsBoolean()
   isActive?: boolean;
 }
@@ -82,6 +90,7 @@ export class UpdateHeroSlideDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(toOptionalBoolean)
   @IsBoolean()
   isActive?: boolean;
 }

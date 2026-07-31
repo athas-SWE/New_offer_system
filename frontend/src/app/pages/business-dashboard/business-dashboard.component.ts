@@ -7,6 +7,13 @@ import { DashboardService } from '../../services/dashboard.service';
 import { BusinessProfile, BusinessService } from '../../services/business.service';
 import { DashboardOfferRow, DashboardStats } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import {
+  ACCEPTED_IMAGE_ACCEPT,
+  IMAGE_UPLOAD_HINT,
+  fileFromInputEvent,
+  validateImageFile,
+} from '../../utils/image-upload';
+import { City, LocationsService } from '../../services/locations.service';
 
 type Tab = 'overview' | 'stores' | 'offers';
 
@@ -145,6 +152,17 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <input id="storeName" class="input-field" formControlName="name" placeholder="Galle Face Branch" />
               </div>
               <div>
+                <label class="mb-1 block text-sm font-medium" for="storeCity">City</label>
+                <select id="storeCity" class="input-field" formControlName="cityId">
+                  <option value="">Select a city</option>
+                  @for (city of cities; track city.id) {
+                    <option [value]="city.id">
+                      {{ cityLabel(city) }}
+                    </option>
+                  }
+                </select>
+              </div>
+              <div>
                 <label class="mb-1 block text-sm font-medium" for="storeAddress">Address</label>
                 <input id="storeAddress" class="input-field" formControlName="address" placeholder="Colombo 03" />
               </div>
@@ -161,10 +179,11 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <input
                   id="storeLogo"
                   type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  [accept]="acceptedImageAccept"
                   class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
                   (change)="onStoreLogoSelected($event)"
                 />
+                <p class="mt-1 text-xs text-[var(--color-muted)]">{{ imageUploadHint }}</p>
                 @if (storeLogoPreview) {
                   <img [src]="storeLogoPreview" alt="Logo preview" class="mt-3 h-20 w-20 rounded-xl object-cover" />
                 }
@@ -206,14 +225,17 @@ type Tab = 'overview' | 'stores' | 'offers';
                           <p class="font-semibold text-teal-900">{{ store.name }}</p>
                           <p class="text-sm text-[var(--color-muted)]">{{ store.address || 'No address' }}</p>
                           <p class="text-xs text-teal-700">{{ store.phone }}</p>
-                          <label class="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-teal-700 hover:underline">
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/gif,image/webp"
-                              class="sr-only"
-                              (change)="uploadLogoForShop(store.id, $event)"
-                            />
-                            {{ uploadingLogoId === store.id ? 'Uploading…' : 'Upload / change logo' }}
+                          <label class="mt-2 inline-flex cursor-pointer flex-col items-start gap-0.5 text-xs font-semibold text-teal-700 hover:underline">
+                            <span class="inline-flex items-center gap-2">
+                              <input
+                                type="file"
+                                [accept]="acceptedImageAccept"
+                                class="sr-only"
+                                (change)="uploadLogoForShop(store.id, $event)"
+                              />
+                              {{ uploadingLogoId === store.id ? 'Uploading…' : 'Upload / change logo' }}
+                            </span>
+                            <span class="font-normal text-[var(--color-muted)] no-underline">{{ imageUploadHint }}</span>
                           </label>
                         </div>
                       </div>
@@ -270,10 +292,11 @@ type Tab = 'overview' | 'stores' | 'offers';
                 <input
                   id="offerImage"
                   type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  [accept]="acceptedImageAccept"
                   class="block w-full text-sm text-[var(--color-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
                   (change)="onOfferImageSelected($event)"
                 />
+                <p class="mt-1 text-xs text-[var(--color-muted)]">{{ imageUploadHint }}</p>
                 @if (offerImagePreview) {
                   <img [src]="offerImagePreview" alt="Offer preview" class="mt-3 h-28 w-full max-w-xs rounded-xl object-cover" />
                 }
@@ -325,10 +348,10 @@ type Tab = 'overview' | 'stores' | 'offers';
                             <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'DRAFT')">
                               Draft
                             </button>
-                            <label class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs">
+                            <label class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs" [title]="imageUploadHint">
                               <input
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                [accept]="acceptedImageAccept"
                                 class="sr-only"
                                 (change)="uploadImageForOffer(row.id, $event)"
                               />
@@ -354,6 +377,7 @@ type Tab = 'overview' | 'stores' | 'offers';
 export class BusinessDashboardComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
   private readonly businessApi = inject(BusinessService);
+  private readonly locations = inject(LocationsService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
 
@@ -369,6 +393,7 @@ export class BusinessDashboardComponent implements OnInit {
   rows: DashboardOfferRow[] = [];
   managedOffers: DashboardOfferRow[] = [];
   business?: BusinessProfile;
+  cities: City[] = [];
   loading = true;
   error = '';
   cards: { label: string; value: string }[] = [];
@@ -386,9 +411,12 @@ export class BusinessDashboardComponent implements OnInit {
   offerImagePreview = '';
   uploadingLogoId = '';
   uploadingOfferImageId = '';
+  readonly acceptedImageAccept = ACCEPTED_IMAGE_ACCEPT;
+  readonly imageUploadHint = IMAGE_UPLOAD_HINT;
 
   storeForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    cityId: ['', Validators.required],
     address: [''],
     phone: [''],
     description: [''],
@@ -406,7 +434,13 @@ export class BusinessDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.justRegistered = this.route.snapshot.queryParamMap.get('registered') === '1';
+    this.locations.getCities().subscribe((cities) => (this.cities = cities));
     this.reloadAll();
+  }
+
+  cityLabel(city: City): string {
+    const district = city.district?.name;
+    return district ? `${city.name} — ${district}` : city.name;
   }
 
   reloadAll(): void {
@@ -449,13 +483,15 @@ export class BusinessDashboardComponent implements OnInit {
   }
 
   onStoreLogoSelected(event: Event): void {
-    const file = this.fileFromEvent(event);
+    const file = this.pickValidImage(event, 'store');
+    if (this.storeLogoPreview) URL.revokeObjectURL(this.storeLogoPreview);
     this.storeLogoFile = file;
     this.storeLogoPreview = file ? URL.createObjectURL(file) : '';
   }
 
   onOfferImageSelected(event: Event): void {
-    const file = this.fileFromEvent(event);
+    const file = this.pickValidImage(event, 'offer');
+    if (this.offerImagePreview) URL.revokeObjectURL(this.offerImagePreview);
     this.offerImageFile = file;
     this.offerImagePreview = file ? URL.createObjectURL(file) : '';
   }
@@ -465,11 +501,23 @@ export class BusinessDashboardComponent implements OnInit {
     this.savingStore = true;
     this.storeMessage = '';
     this.storeError = '';
-    this.businessApi.createStoreWithLogo(this.storeForm.getRawValue(), this.storeLogoFile).subscribe({
+    const value = this.storeForm.getRawValue();
+    this.businessApi
+      .createStoreWithLogo(
+        {
+          name: value.name,
+          address: value.address || undefined,
+          phone: value.phone || undefined,
+          description: value.description || undefined,
+          cityId: value.cityId || undefined,
+        },
+        this.storeLogoFile,
+      )
+      .subscribe({
       next: () => {
         this.savingStore = false;
         this.storeMessage = this.storeLogoFile ? 'Shop created with logo.' : 'Shop created.';
-        this.storeForm.reset({ name: '', address: '', phone: '', description: '' });
+        this.storeForm.reset({ name: '', cityId: '', address: '', phone: '', description: '' });
         this.clearStoreLogo();
         this.reloadAll();
       },
@@ -481,7 +529,7 @@ export class BusinessDashboardComponent implements OnInit {
   }
 
   uploadLogoForShop(shopId: string, event: Event): void {
-    const file = this.fileFromEvent(event);
+    const file = this.pickValidImage(event, 'store');
     if (!file) return;
     this.uploadingLogoId = shopId;
     this.storeError = '';
@@ -539,7 +587,7 @@ export class BusinessDashboardComponent implements OnInit {
   }
 
   uploadImageForOffer(offerId: string, event: Event): void {
-    const file = this.fileFromEvent(event);
+    const file = this.pickValidImage(event, 'offer');
     if (!file) return;
     this.uploadingOfferImageId = offerId;
     this.offerError = '';
@@ -570,10 +618,22 @@ export class BusinessDashboardComponent implements OnInit {
     });
   }
 
-  private fileFromEvent(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] || null;
-    input.value = '';
+  private pickValidImage(event: Event, target: 'store' | 'offer'): File | null {
+    const file = fileFromInputEvent(event);
+    if (!file) return null;
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      if (target === 'store') {
+        this.storeError = invalid;
+        this.storeMessage = '';
+      } else {
+        this.offerError = invalid;
+        this.offerMessage = '';
+      }
+      return null;
+    }
+    if (target === 'store') this.storeError = '';
+    else this.offerError = '';
     return file;
   }
 

@@ -6,6 +6,8 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '../modules/users/entities/role.entity';
 import { User } from '../modules/users/entities/user.entity';
 import { Shop } from '../modules/shops/entities/shop.entity';
+import { District } from '../modules/locations/entities/district.entity';
+import { City } from '../modules/locations/entities/city.entity';
 import { UserRole } from '../common/enums/role.enum';
 import { ShopStatus } from '../common/enums/shop-status.enum';
 
@@ -20,6 +22,10 @@ export class SeedService implements OnModuleInit {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Shop)
     private readonly shopRepo: Repository<Shop>,
+    @InjectRepository(District)
+    private readonly districtRepo: Repository<District>,
+    @InjectRepository(City)
+    private readonly cityRepo: Repository<City>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -28,6 +34,7 @@ export class SeedService implements OnModuleInit {
     if (!enabled) return;
     try {
       await this.seedRoles();
+      await this.seedLocations();
       await this.seedAdmin();
       await this.seedShopOwner();
     } catch (error) {
@@ -85,6 +92,84 @@ export class SeedService implements OnModuleInit {
     );
     this.logger.log(`Seeded user: ${email} (${params.role})`);
     return saved;
+  }
+
+  private async seedLocations() {
+    const allowedCitySlugs = [
+      'kalmunai',
+      'maruthamunai',
+      'sainthamaruthu',
+      'ampara-city',
+      'ninthavur',
+      'sammanthurai',
+      'pottuvil',
+      'akkaraipattu',
+      'karaithivu',
+    ];
+
+    // Soft-delete any cities outside the Ampara coastal list
+    const allCities = await this.cityRepo.find({ where: { isDeleted: false } });
+    for (const city of allCities) {
+      if (!allowedCitySlugs.includes(city.slug)) {
+        city.isDeleted = true;
+        city.isActive = false;
+        await this.cityRepo.save(city);
+        this.logger.log(`Removed city from list: ${city.name}`);
+      }
+    }
+
+    let district = await this.districtRepo.findOne({
+      where: { slug: 'ampara', isDeleted: false },
+    });
+    if (!district) {
+      district = await this.districtRepo.save(
+        this.districtRepo.create({
+          name: 'Ampara',
+          slug: 'ampara',
+          province: 'Eastern',
+          isActive: true,
+          isDeleted: false,
+        }),
+      );
+      this.logger.log('Seeded district: Ampara');
+    }
+
+    const cities: Array<{ name: string; slug: string }> = [
+      { name: 'Kalmunai', slug: 'kalmunai' },
+      { name: 'Maruthamunai', slug: 'maruthamunai' },
+      { name: 'Sainthamaruthu', slug: 'sainthamaruthu' },
+      { name: 'Ampara', slug: 'ampara-city' },
+      { name: 'Ninthavur', slug: 'ninthavur' },
+      { name: 'Sammanthurai', slug: 'sammanthurai' },
+      { name: 'Pottuvil', slug: 'pottuvil' },
+      { name: 'Akkaraipattu', slug: 'akkaraipattu' },
+      { name: 'Karaithivu', slug: 'karaithivu' },
+    ];
+
+    for (const c of cities) {
+      const existing = await this.cityRepo.findOne({
+        where: { slug: c.slug },
+      });
+      if (!existing) {
+        await this.cityRepo.save(
+          this.cityRepo.create({
+            name: c.name,
+            slug: c.slug,
+            districtId: district.id,
+            isActive: true,
+            isDeleted: false,
+          }),
+        );
+        this.logger.log(`Seeded city: ${c.name}`);
+      } else if (existing.isDeleted || !existing.isActive) {
+        existing.isDeleted = false;
+        existing.isActive = true;
+        existing.name = c.name;
+        existing.districtId = district.id;
+        await this.cityRepo.save(existing);
+        this.logger.log(`Restored city: ${c.name}`);
+      }
+    }
   }
 
   private async seedAdmin() {

@@ -43,4 +43,9 @@ export class ApiService {
     form.append(fieldName, file, file.name);
     return this.http.post<T>(`${this.baseUrl}${path}`, form);
   }
+
+  /** Multipart form with fields + optional file. */
+  postFormData<T>(path: string, form: FormData): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}${path}`, form);
+  }
 }

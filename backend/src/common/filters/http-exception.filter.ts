@@ -16,6 +16,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
+    const multer = exception as { name?: string; code?: string; message?: string };
+    if (multer?.name === 'MulterError') {
+      const message =
+        multer.code === 'LIMIT_FILE_SIZE'
+          ? 'Image must be 5 MB or smaller'
+          : multer.message || 'File upload failed';
+      response.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
