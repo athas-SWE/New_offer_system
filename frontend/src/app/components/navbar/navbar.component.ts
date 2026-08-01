@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [RouterLink, RouterLinkActive, NgIf, AsyncPipe, MatIconModule, MatButtonModule],
   template: `
     <header
-      class="sticky top-0 z-50 border-b border-teal-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,118,110,0.08)] backdrop-blur-xl"
+      class="sticky top-0 z-50 border-b border-teal-200/70 bg-white/90 shadow-[0_8px_30px_rgba(0,28,61,0.08)] backdrop-blur-xl"
     >
       <div
         class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-3.5 sm:gap-5 sm:px-6 sm:py-4 lg:px-8"
@@ -73,7 +73,7 @@ import { AuthService } from '../../services/auth.service';
                 routerLink="/register"
                 class="btn-gold !hidden !px-5 !py-2.5 !text-base md:!inline-flex"
               >
-                List your shop
+                Register your Shop
               </a>
             </ng-template>
           </div>
@@ -144,7 +144,7 @@ import { AuthService } from '../../services/auth.service';
                 class="btn-gold mt-1 !w-full !py-3 !text-base"
                 (click)="menuOpen = false"
               >
-                List your shop
+                Register your Shops
               </a>
             </ng-template>
           </div>

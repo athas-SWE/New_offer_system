@@ -68,7 +68,21 @@ import {
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-teal-900" for="address">Address</label>
-              <input id="address" class="input-field" formControlName="address" placeholder="Galle Road, Colombo 03" />
+              <input id="address" class="input-field" formControlName="address" placeholder="Main Street, Kalmunai" />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium text-teal-900" for="locationUrl">
+                Google Maps location URL
+              </label>
+              <input
+                id="locationUrl"
+                class="input-field"
+                formControlName="locationUrl"
+                placeholder="https://maps.google.com/?q=7.4167,81.8167"
+              />
+              <p class="mt-1 text-xs text-[var(--color-muted)]">
+                Open Google Maps → Share → Copy link, then paste it here so customers can find your shop on the map.
+              </p>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-teal-900" for="logo">Shop logo (optional)</label>
@@ -163,6 +177,7 @@ export class RegisterComponent implements OnInit {
     registrationNumber: [''],
     cityId: ['', Validators.required],
     address: [''],
+    locationUrl: [''],
     ownerName: ['', [Validators.required, Validators.minLength(2)]],
     ownerEmail: ['', [Validators.required, Validators.email]],
     ownerPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -212,6 +227,7 @@ export class RegisterComponent implements OnInit {
         phone: value.phone || undefined,
         registrationNumber: value.registrationNumber || undefined,
         address: value.address || undefined,
+        locationUrl: value.locationUrl || undefined,
         cityId: value.cityId || undefined,
         ownerName: value.ownerName,
         ownerEmail: value.ownerEmail,

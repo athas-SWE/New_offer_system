@@ -47,9 +47,9 @@ const MOCK_OFFERS: Offer[] = [
     categoryName: 'Food & Dining',
     storeId: 's1',
     storeName: 'Harbour Kitchen',
-    city: 'Colombo',
-    latitude: 6.9271,
-    longitude: 79.8612,
+    city: 'Kalmunai',
+    latitude: 7.4167,
+    longitude: 81.8167,
     startsAt: '2026-07-01',
     endsAt: '2026-08-31',
     isFeatured: true,
@@ -159,7 +159,17 @@ export class OffersService {
 
   private cityFromAddress(address?: string | null): string | undefined {
     if (!address) return undefined;
-    const known = ['Colombo', 'Kandy', 'Negombo', 'Nuwara Eliya', 'Galle', 'Jaffna'];
+    const known = [
+      'Kalmunai',
+      'Maruthamunai',
+      'Sainthamaruthu',
+      'Ampara',
+      'Ninthavur',
+      'Sammanthurai',
+      'Pottuvil',
+      'Akkaraipattu',
+      'Karaithivu',
+    ];
     return known.find((city) => address.toLowerCase().includes(city.toLowerCase()));
   }
 

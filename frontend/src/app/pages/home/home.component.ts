@@ -13,76 +13,38 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [RouterLink, OfferCardComponent, LoadingSpinnerComponent, MatIconModule],
   template: `
-    <section class="relative min-h-[88vh] overflow-hidden text-white">
+    <section class="relative min-h-[88vh] overflow-hidden">
       @for (slide of slides; track slide.id; let i = $index) {
         <div
           class="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
           [class.opacity-100]="i === activeSlide"
           [class.opacity-0]="i !== activeSlide"
-          [style.background-image]="
-            'linear-gradient(120deg, rgba(13,92,86,0.92), rgba(15,78,74,0.75)), url(' + slide.imageUrl + ')'
-          "
+          [style.background-image]="'url(' + slide.imageUrl + ')'"
         ></div>
       }
-      <div
-        class="absolute inset-0 opacity-30"
-        style="background-image: radial-gradient(circle at 20% 20%, rgba(251,191,36,0.35), transparent 40%), radial-gradient(circle at 80% 60%, rgba(20,184,166,0.35), transparent 35%);"
-      ></div>
 
-      <div class="relative mx-auto flex min-h-[78vh] max-w-6xl flex-col justify-center px-4 py-14 sm:min-h-[88vh] sm:px-6 sm:py-20 lg:px-8">
-        <div class="max-w-2xl animate-hero-enter">
-          <div class="inline-flex max-w-full rounded-2xl bg-white/95 px-3 py-3 shadow-lift backdrop-blur sm:rounded-3xl sm:px-5 sm:py-4">
-            <img
-              src="images/logo.png"
-              alt="Offer Lanka — Sri Lanka's Daily Offers Hub"
-              class="h-16 w-auto max-w-[220px] object-contain sm:h-28 sm:max-w-none lg:h-36"
-            />
-          </div>
-          <h1 class="mt-5 font-display text-xl font-medium text-teal-50 sm:mt-6 sm:text-3xl">
-            {{ currentSlide?.title || 'Island deals, discovered near you' }}
-          </h1>
-          <p class="mt-3 max-w-lg text-sm text-teal-50/85 sm:mt-4 sm:text-lg">
-            {{
-              currentSlide?.subtitle ||
-                'Browse food, fashion, travel and wellness offers from trusted Sri Lankan shops — all in one place.'
-            }}
-          </p>
-          <div class="mt-6 flex flex-wrap gap-3 sm:mt-8">
-            @if (isExternalLink(currentSlide?.ctaLink)) {
-              <a [href]="currentSlide?.ctaLink" class="btn-gold" target="_blank" rel="noopener">
-                {{ currentSlide?.ctaLabel || 'Browse offers' }}
-              </a>
-            } @else {
-              <a [routerLink]="currentSlide?.ctaLink || '/offers'" class="btn-gold">
-                {{ currentSlide?.ctaLabel || 'Browse offers' }}
-              </a>
-            }
-            <a
-              routerLink="/shops"
-              class="btn-secondary !border-white/30 !bg-white/10 !text-white hover:!bg-white/20"
-            >
-              Explore shops
-            </a>
-          </div>
-        </div>
+      <div class="relative mx-auto flex min-h-[78vh] max-w-6xl flex-col items-start justify-end px-4 pb-10 pt-14 sm:min-h-[88vh] sm:px-6 sm:pb-14 lg:px-8">
+        <h1 class="max-w-2xl animate-hero-enter text-left font-display text-xl font-medium text-white drop-shadow-md sm:text-3xl">
+          {{ currentSlide?.title || 'Island deals, discovered near you' }}
+        </h1>
 
         @if (slides.length > 1) {
-          <div class="mt-10 flex items-center gap-3">
+          <div class="mt-5 flex items-center gap-3">
             <button
               type="button"
-              class="rounded-full border border-white/30 bg-white/10 p-2 hover:bg-white/20"
+              class="rounded-full border border-teal-200 bg-white/95 p-2 text-teal-800 shadow-sm hover:bg-white"
               (click)="prevSlide()"
               aria-label="Previous slide"
             >
               <mat-icon>chevron_left</mat-icon>
             </button>
-            <div class="flex gap-2">
+            <div class="flex gap-2 rounded-full bg-white/90 px-3 py-2 shadow-sm">
               @for (slide of slides; track slide.id; let i = $index) {
                 <button
                   type="button"
                   [class]="
                     'h-2.5 w-2.5 rounded-full transition ' +
-                    (i === activeSlide ? 'bg-amber-300' : 'bg-white/40')
+                    (i === activeSlide ? 'bg-gold-500' : 'bg-teal-200')
                   "
                   (click)="goToSlide(i)"
                   [attr.aria-label]="'Go to slide ' + (i + 1)"
@@ -92,7 +54,7 @@ import { MatIconModule } from '@angular/material/icon';
             </div>
             <button
               type="button"
-              class="rounded-full border border-white/30 bg-white/10 p-2 hover:bg-white/20"
+              class="rounded-full border border-teal-200 bg-white/95 p-2 text-teal-800 shadow-sm hover:bg-white"
               (click)="nextSlide()"
               aria-label="Next slide"
             >
@@ -181,10 +143,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.slides.length < 2) return;
     this.activeSlide = (this.activeSlide - 1 + this.slides.length) % this.slides.length;
     this.startSlideshow();
-  }
-
-  isExternalLink(link?: string | null): boolean {
-    return !!link && /^https?:\/\//i.test(link);
   }
 
   private startSlideshow(): void {

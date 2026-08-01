@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
             <img src="images/logo.png" alt="Offer Lanka" class="h-14 w-auto object-contain" />
           </div>
           <p class="mt-3 text-sm text-teal-100/80">
-            Sri Lanka's marketplace for everyday deals — from Colombo cafés to hill-country stays.
+            Sri Lanka's marketplace for everyday deals — focused on Ampara coastal towns.
           </p>
         </div>
         <div>
@@ -30,12 +30,15 @@ import { RouterLink } from '@angular/router';
           <div class="mt-3 flex flex-col gap-2 text-sm">
             <a routerLink="/about" class="hover:text-gold-400">About</a>
             <a routerLink="/contact" class="hover:text-gold-400">Contact</a>
-            <a routerLink="/register" class="hover:text-gold-400">List your shop</a>
+            <a routerLink="/register" class="hover:text-gold-400">Register your Shop</a>
           </div>
         </div>
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-gold-400">Cities</p>
-          <p class="mt-3 text-sm text-teal-100/80">Colombo · Kandy · Galle · Negombo · Nuwara Eliya · Jaffna</p>
+          <p class="mt-3 text-sm text-teal-100/80">
+            Kalmunai · Maruthamunai · Sainthamaruthu · Ampara · Ninthavur · Sammanthurai · Pottuvil · Akkaraipattu ·
+            Karaithivu
+          </p>
         </div>
       </div>
       <div class="border-t border-teal-800 py-4 text-center text-xs text-teal-200/70">

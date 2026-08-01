@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { StoresService } from '../../services/stores.service';
 import { OffersService } from '../../services/offers.service';
@@ -54,7 +55,7 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
               <dl class="mt-5 space-y-3 text-sm">
                 <div>
                   <dt class="text-[var(--color-muted)]">Address</dt>
-                  <dd class="font-medium text-teal-900">{{ store.address }}</dd>
+                  <dd class="font-medium text-teal-900">{{ store.address || 'Not provided' }}</dd>
                 </div>
                 @if (store.phone) {
                   <div>
@@ -71,6 +72,34 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
                   </div>
                 }
               </dl>
+
+              @if (mapEmbedUrl || mapsLink) {
+                <div class="mt-6">
+                  <h3 class="font-display text-lg font-semibold text-teal-900">Location</h3>
+                  @if (mapEmbedUrl) {
+                    <div class="mt-3 overflow-hidden rounded-xl border border-teal-100">
+                      <iframe
+                        title="Shop location map"
+                        class="h-56 w-full"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        [src]="mapEmbedUrl"
+                      ></iframe>
+                    </div>
+                  }
+                  @if (mapsLink) {
+                    <a
+                      [href]="mapsLink"
+                      target="_blank"
+                      rel="noopener"
+                      class="btn-secondary mt-3 !justify-start"
+                    >
+                      <mat-icon class="!text-base">map</mat-icon>
+                      Open in Google Maps
+                    </a>
+                  }
+                </div>
+              }
             </div>
             <div class="lg:col-span-2">
               <h2 class="section-title !text-2xl">Current offers</h2>
@@ -94,19 +123,47 @@ export class StoreDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly storesService = inject(StoresService);
   private readonly offersService = inject(OffersService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   store?: Store;
   storeOffers: Offer[] = [];
   loading = true;
+  mapEmbedUrl?: SafeResourceUrl;
+  mapsLink?: string;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
     this.storesService.getStoreById(id).subscribe((store) => {
       this.store = store;
       this.loading = false;
+      this.setupMap(store);
       if (store) {
         this.offersService.getOffers({ storeId: store.id }).subscribe((offers) => (this.storeOffers = offers));
       }
     });
+  }
+
+  private setupMap(store?: Store): void {
+    this.mapEmbedUrl = undefined;
+    this.mapsLink = undefined;
+    if (!store) return;
+
+    const lat = store.latitude;
+    const lng = store.longitude;
+    const hasCoords =
+      lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
+
+    if (hasCoords) {
+      const delta = 0.01;
+      const bbox = `${lng - delta}%2C${lat - delta}%2C${lng + delta}%2C${lat + delta}`;
+      const embed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lng}`;
+      this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embed);
+    }
+
+    if (store.locationUrl) {
+      this.mapsLink = store.locationUrl;
+    } else if (hasCoords) {
+      this.mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+    }
   }
 }

@@ -24,11 +24,11 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
               [queryParams]="{ categoryId: cat.id }"
               class="surface-panel group relative overflow-hidden transition hover:-translate-y-1 hover:shadow-lift"
             >
-              <div class="absolute inset-y-0 left-0 w-1.5" [style.background]="cat.color || '#0d9488'"></div>
+              <div class="absolute inset-y-0 left-0 w-1.5" [style.background]="cat.color || '#001C3D'"></div>
               <div class="flex items-start gap-4 pl-2">
                 <span
                   class="flex h-14 w-14 items-center justify-center rounded-2xl text-white"
-                  [style.background]="cat.color || '#0d9488'"
+                  [style.background]="cat.color || '#001C3D'"
                 >
                   <mat-icon>{{ cat.icon }}</mat-icon>
                 </span>

@@ -25,6 +25,9 @@ export class Shop extends BaseAuditEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   address: string | null;
 
+  @Column({ name: 'location_url', type: 'varchar', length: 1000, nullable: true })
+  locationUrl: string | null;
+
   @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
   logoUrl: string | null;
 

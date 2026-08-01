@@ -13,7 +13,7 @@ import { formatLkr } from '../../shared/utils';
       <a [routerLink]="['/offers', offer.id]" class="block">
         <div class="relative h-44 overflow-hidden">
           <img [src]="offer.imageUrl" [alt]="offer.title" class="h-full w-full object-cover" />
-          <span class="absolute left-3 top-3 rounded-full bg-gold-500 px-2.5 py-1 text-xs font-bold text-teal-900">
+          <span class="absolute left-3 top-3 rounded-full bg-gold-500 px-2.5 py-1 text-xs font-bold text-white">
             -{{ offer.discountPercent }}%
           </span>
           @if (offer.distanceKm != null) {

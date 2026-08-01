@@ -121,6 +121,7 @@ model Shop {
   email              String?        @db.VarChar(180)
   phone              String?        @db.VarChar(30)
   address            String?        @db.VarChar(500)
+  locationUrl        String?        @map("location_url") @db.VarChar(1000)
   logoUrl            String?        @map("logo_url") @db.VarChar(500)
   status             BusinessStatus @default(PENDING)
   isActive           Boolean        @default(true) @map("is_active")

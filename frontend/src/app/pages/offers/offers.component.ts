@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OffersService } from '../../services/offers.service';
 import { CategoriesService } from '../../services/categories.service';
+import { City, LocationsService } from '../../services/locations.service';
 import { Category, Offer, OfferFilter } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
@@ -26,8 +27,8 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
         </select>
         <select class="input-field" [(ngModel)]="filter.city" (ngModelChange)="apply()">
           <option value="">All cities</option>
-          @for (city of cities; track city) {
-            <option [value]="city">{{ city }}</option>
+          @for (city of cities; track city.id) {
+            <option [value]="city.name">{{ cityLabel(city) }}</option>
           }
         </select>
         <select class="input-field" [(ngModel)]="minDiscount" (ngModelChange)="onDiscountChange()">
@@ -60,22 +61,30 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
 export class OffersComponent implements OnInit {
   private readonly offersService = inject(OffersService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly locations = inject(LocationsService);
   private readonly route = inject(ActivatedRoute);
 
   offers: Offer[] = [];
   categories: Category[] = [];
-  cities = ['Colombo', 'Kandy', 'Negombo', 'Nuwara Eliya', 'Galle'];
+  cities: City[] = [];
   loading = true;
   minDiscount = 0;
   filter: OfferFilter = { search: '', categoryId: '', city: '' };
 
   ngOnInit(): void {
     this.categoriesService.getCategories().subscribe((cats) => (this.categories = cats));
+    this.locations.getCities().subscribe((cities) => (this.cities = cities));
     this.route.queryParamMap.subscribe((params) => {
       this.filter.categoryId = params.get('categoryId') || '';
       this.filter.search = params.get('q') || '';
+      this.filter.city = params.get('city') || this.filter.city || '';
       this.apply();
     });
+  }
+
+  cityLabel(city: City): string {
+    const district = city.district?.name;
+    return district ? `${city.name} — ${district}` : city.name;
   }
 
   apply(): void {

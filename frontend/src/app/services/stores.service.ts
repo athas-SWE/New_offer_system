@@ -12,6 +12,7 @@ interface ApiShop {
   name: string;
   description?: string | null;
   address?: string | null;
+  locationUrl?: string | null;
   phone?: string | null;
   logoUrl?: string | null;
   latitude?: number | string | null;
@@ -19,6 +20,7 @@ interface ApiShop {
   isActive?: boolean;
   status?: string;
   city?: { id?: string; name?: string } | null;
+  owner?: { id?: string; name?: string; email?: string; phone?: string | null } | null;
 }
 
 interface PaginatedShops {
@@ -66,7 +68,9 @@ export class StoresService {
       logoUrl: resolveAssetUrl(row.logoUrl) || PLACEHOLDER_LOGO,
       city: cityName,
       address: row.address || '',
+      locationUrl: row.locationUrl || undefined,
       phone: row.phone || undefined,
+      ownerName: row.owner?.name || undefined,
       rating: 0,
       offerCount: 0,
       isVerified: row.status === 'APPROVED',
@@ -77,7 +81,17 @@ export class StoresService {
 
   private cityFromAddress(address?: string | null): string | undefined {
     if (!address) return undefined;
-    const known = ['Colombo', 'Kandy', 'Negombo', 'Nuwara Eliya', 'Galle', 'Jaffna'];
+    const known = [
+      'Kalmunai',
+      'Maruthamunai',
+      'Sainthamaruthu',
+      'Ampara',
+      'Ninthavur',
+      'Sammanthurai',
+      'Pottuvil',
+      'Akkaraipattu',
+      'Karaithivu',
+    ];
     return known.find((city) => address.toLowerCase().includes(city.toLowerCase()));
   }
 }

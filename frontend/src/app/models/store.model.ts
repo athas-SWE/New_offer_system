@@ -6,8 +6,10 @@ export interface Store {
   coverUrl?: string;
   city: string;
   address: string;
+  locationUrl?: string;
   phone?: string;
   website?: string;
+  ownerName?: string;
   categoryIds?: string[];
   rating?: number;
   offerCount?: number;

@@ -44,6 +44,11 @@ export class RegisterShopDto {
   @IsString()
   address?: string;
 
+  @ApiPropertyOptional({ description: 'Google Maps share URL for the shop location' })
+  @IsOptional()
+  @IsString()
+  locationUrl?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
@@ -83,6 +88,11 @@ export class CreateShopDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({ description: 'Google Maps share URL for the shop location' })
+  @IsOptional()
+  @IsString()
+  locationUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -127,6 +137,11 @@ export class UpdateShopDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({ description: 'Google Maps share URL for the shop location' })
+  @IsOptional()
+  @IsString()
+  locationUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

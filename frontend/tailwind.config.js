@@ -27,7 +27,7 @@ module.exports = {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        lift: '0 12px 28px -8px rgba(13, 92, 86, 0.25)',
+        lift: '0 12px 28px -8px rgba(0, 28, 61, 0.25)',
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out forwards',

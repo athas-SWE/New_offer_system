@@ -21,6 +21,7 @@ import {
   ShopQueryDto,
 } from './dto/shop.dto';
 import { paginate } from '../../common/dto/pagination.dto';
+import { resolveLocationFields } from './utils/parse-maps-url';
 
 @Injectable()
 export class ShopsService {
@@ -59,6 +60,7 @@ export class ShopsService {
         isDeleted: false,
       });
       const savedUser = await manager.save(user);
+      const location = resolveLocationFields({ locationUrl: dto.locationUrl });
 
       const shop = manager.create(Shop, {
         name: dto.name,
@@ -67,6 +69,9 @@ export class ShopsService {
         email: dto.email || dto.ownerEmail.toLowerCase(),
         phone: dto.phone || dto.ownerPhone || null,
         address: dto.address || null,
+        locationUrl: location.locationUrl,
+        latitude: location.latitude,
+        longitude: location.longitude,
         cityId: dto.cityId || null,
         ownerId: savedUser.id,
         status: ShopStatus.PENDING,
@@ -84,14 +89,20 @@ export class ShopsService {
     if (role !== UserRole.ADMIN && role !== UserRole.BUSINESS_OWNER) {
       throw new ForbiddenException('Not allowed');
     }
+    const location = resolveLocationFields({
+      locationUrl: dto.locationUrl,
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+    });
     const shop = this.shopRepo.create({
       name: dto.name,
       description: dto.description || null,
       address: dto.address || null,
+      locationUrl: location.locationUrl,
       phone: dto.phone || null,
       email: dto.email || null,
-      latitude: dto.latitude ?? null,
-      longitude: dto.longitude ?? null,
+      latitude: location.latitude,
+      longitude: location.longitude,
       cityId: dto.cityId || null,
       ownerId: actorId,
       status: role === UserRole.ADMIN ? ShopStatus.APPROVED : ShopStatus.PENDING,
@@ -162,7 +173,42 @@ export class ShopsService {
     if (role !== UserRole.ADMIN && shop.ownerId !== actorId) {
       throw new ForbiddenException('Not allowed to update this shop');
     }
-    Object.assign(shop, { ...dto, updatedBy: actorId });
+
+    if (dto.name !== undefined) shop.name = dto.name;
+    if (dto.description !== undefined) shop.description = dto.description;
+    if (dto.address !== undefined) shop.address = dto.address;
+    if (dto.phone !== undefined) shop.phone = dto.phone;
+    if (dto.email !== undefined) shop.email = dto.email;
+    if (dto.logoUrl !== undefined) shop.logoUrl = dto.logoUrl;
+    if (dto.cityId !== undefined) shop.cityId = dto.cityId;
+    if (dto.isActive !== undefined) shop.isActive = dto.isActive;
+
+    if (
+      dto.locationUrl !== undefined ||
+      dto.latitude !== undefined ||
+      dto.longitude !== undefined
+    ) {
+      const location = resolveLocationFields({
+        locationUrl:
+          dto.locationUrl !== undefined ? dto.locationUrl : shop.locationUrl,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+      });
+      shop.locationUrl = location.locationUrl;
+      if (dto.latitude !== undefined || dto.longitude !== undefined) {
+        shop.latitude = location.latitude;
+        shop.longitude = location.longitude;
+      } else if (
+        dto.locationUrl !== undefined &&
+        location.latitude != null &&
+        location.longitude != null
+      ) {
+        shop.latitude = location.latitude;
+        shop.longitude = location.longitude;
+      }
+    }
+
+    shop.updatedBy = actorId;
     await this.shopRepo.save(shop);
     return this.findOne(id);
   }

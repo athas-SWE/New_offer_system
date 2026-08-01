@@ -30,6 +30,7 @@ export interface CreateStorePayload {
   name: string;
   description?: string;
   address?: string;
+  locationUrl?: string;
   phone?: string;
   cityId?: string;
 }
@@ -41,6 +42,7 @@ export interface RegisterShopPayload {
   email?: string;
   phone?: string;
   address?: string;
+  locationUrl?: string;
   cityId?: string;
   ownerName: string;
   ownerEmail: string;

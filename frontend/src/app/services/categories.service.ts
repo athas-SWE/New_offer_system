@@ -11,7 +11,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Restaurants, cafés and street-food specials.',
     icon: 'restaurant',
     offerCount: 42,
-    color: '#0d9488',
+    color: '#001C3D',
   },
   {
     id: 'c-fashion',
@@ -20,7 +20,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Apparel, batik and local designers.',
     icon: 'checkroom',
     offerCount: 28,
-    color: '#0f766e',
+    color: '#0d355c',
   },
   {
     id: 'c-travel',
@@ -29,7 +29,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Hotels, tours and staycations island-wide.',
     icon: 'flight',
     offerCount: 19,
-    color: '#115e59',
+    color: '#1e4d7a',
   },
   {
     id: 'c-wellness',
@@ -38,7 +38,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Spas, Ayurveda and fitness deals.',
     icon: 'spa',
     offerCount: 15,
-    color: '#14b8a6',
+    color: '#FFB800',
   },
   {
     id: 'c-electronics',
@@ -47,7 +47,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Phones, gadgets and home tech.',
     icon: 'devices',
     offerCount: 33,
-    color: '#d97706',
+    color: '#FF7A00',
   },
   {
     id: 'c-entertainment',
@@ -56,7 +56,7 @@ const MOCK_CATEGORIES: Category[] = [
     description: 'Movies, parks and family fun.',
     icon: 'celebration',
     offerCount: 11,
-    color: '#f59e0b',
+    color: '#FF4D00',
   },
 ];
 

@@ -37,7 +37,7 @@ import { formatDate, formatLkr } from '../../shared/utils';
                   <span class="text-lg text-[var(--color-muted)] line-through">{{ price(offer.originalPrice) }}</span>
                 }
               }
-              <span class="rounded-full bg-gold-500 px-3 py-1 text-sm font-bold text-teal-900">-{{ offer.discountPercent }}%</span>
+              <span class="rounded-full bg-gold-500 px-3 py-1 text-sm font-bold text-white">-{{ offer.discountPercent }}%</span>
             </div>
 
             <dl class="mt-6 grid gap-3 text-sm sm:grid-cols-2">

@@ -194,32 +194,60 @@ export class SeedService implements OnModuleInit {
     });
     if (!owner) return;
 
+    const kalmunai = await this.cityRepo.findOne({
+      where: { slug: 'kalmunai', isDeleted: false },
+    });
+
+    const demoLocation = {
+      address: 'Main Street, Kalmunai',
+      locationUrl: 'https://www.google.com/maps?q=7.4167,81.8167',
+      latitude: 7.4167,
+      longitude: 81.8167,
+      cityId: kalmunai?.id || null,
+    };
+
     const existing = await this.shopRepo.findOne({
       where: { ownerId: owner.id, isDeleted: false },
     });
     if (existing) {
+      let changed = false;
       if (existing.status !== ShopStatus.APPROVED || !existing.isActive) {
         existing.status = ShopStatus.APPROVED;
         existing.isActive = true;
+        changed = true;
+      }
+      if (!existing.locationUrl || existing.latitude == null || existing.longitude == null) {
+        existing.address = existing.address || demoLocation.address;
+        existing.locationUrl = demoLocation.locationUrl;
+        existing.latitude = demoLocation.latitude;
+        existing.longitude = demoLocation.longitude;
+        existing.cityId = existing.cityId || demoLocation.cityId;
+        changed = true;
+      }
+      if (changed) {
         await this.shopRepo.save(existing);
-        this.logger.log(`Approved demo shop: ${existing.name}`);
+        this.logger.log(`Updated demo shop location: ${existing.name}`);
       }
       return;
     }
 
     await this.shopRepo.save(
       this.shopRepo.create({
-        name: 'Colombo Demo Shop',
+        name: 'Kalmunai Demo Shop',
         description: 'Seeded demo shop for Offer Lanka shop dashboard.',
         email: 'business@offerlanka.lk',
         phone: '+94771234567',
-        address: 'Galle Road, Colombo 03',
+        address: demoLocation.address,
+        locationUrl: demoLocation.locationUrl,
+        latitude: demoLocation.latitude,
+        longitude: demoLocation.longitude,
+        cityId: demoLocation.cityId,
         status: ShopStatus.APPROVED,
         isActive: true,
         ownerId: owner.id,
         isDeleted: false,
       }),
     );
-    this.logger.log('Seeded demo shop: Colombo Demo Shop');
+    this.logger.log('Seeded demo shop: Kalmunai Demo Shop');
   }
 }

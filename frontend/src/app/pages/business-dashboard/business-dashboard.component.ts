@@ -164,7 +164,19 @@ type Tab = 'overview' | 'stores' | 'offers';
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium" for="storeAddress">Address</label>
-                <input id="storeAddress" class="input-field" formControlName="address" placeholder="Colombo 03" />
+                <input id="storeAddress" class="input-field" formControlName="address" placeholder="Main Street, Kalmunai" />
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="storeLocationUrl">Google Maps location URL</label>
+                <input
+                  id="storeLocationUrl"
+                  class="input-field"
+                  formControlName="locationUrl"
+                  placeholder="https://maps.google.com/?q=7.4167,81.8167"
+                />
+                <p class="mt-1 text-xs text-[var(--color-muted)]">
+                  Paste a Google Maps share link so customers can view your shop on the map.
+                </p>
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium" for="storePhone">Phone</label>
@@ -418,6 +430,7 @@ export class BusinessDashboardComponent implements OnInit {
     name: ['', [Validators.required, Validators.minLength(2)]],
     cityId: ['', Validators.required],
     address: [''],
+    locationUrl: [''],
     phone: [''],
     description: [''],
   });
@@ -507,6 +520,7 @@ export class BusinessDashboardComponent implements OnInit {
         {
           name: value.name,
           address: value.address || undefined,
+          locationUrl: value.locationUrl || undefined,
           phone: value.phone || undefined,
           description: value.description || undefined,
           cityId: value.cityId || undefined,
@@ -517,7 +531,14 @@ export class BusinessDashboardComponent implements OnInit {
       next: () => {
         this.savingStore = false;
         this.storeMessage = this.storeLogoFile ? 'Shop created with logo.' : 'Shop created.';
-        this.storeForm.reset({ name: '', cityId: '', address: '', phone: '', description: '' });
+        this.storeForm.reset({
+          name: '',
+          cityId: '',
+          address: '',
+          locationUrl: '',
+          phone: '',
+          description: '',
+        });
         this.clearStoreLogo();
         this.reloadAll();
       },

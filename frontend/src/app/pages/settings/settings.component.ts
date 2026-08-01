@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { City, LocationsService } from '../../services/locations.service';
 
 @Component({
   selector: 'app-settings',
@@ -37,12 +38,10 @@ import { RouterLink } from '@angular/router';
         <div class="surface-panel">
           <label class="mb-1 block text-sm font-medium text-teal-900" for="city">Preferred city</label>
           <select id="city" class="input-field" [(ngModel)]="city">
-            <option>Colombo</option>
-            <option>Kandy</option>
-            <option>Galle</option>
-            <option>Negombo</option>
-            <option>Nuwara Eliya</option>
-            <option>Jaffna</option>
+            <option value="">Select a city</option>
+            @for (c of cities; track c.id) {
+              <option [value]="c.name">{{ cityLabel(c) }}</option>
+            }
           </select>
         </div>
 
@@ -52,11 +51,40 @@ import { RouterLink } from '@angular/router';
     </div>
   `,
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
+  private readonly locations = inject(LocationsService);
+
   emailAlerts = true;
   nearby = true;
-  city = 'Colombo';
+  city = '';
+  cities: City[] = [];
   saved = false;
+
+  ngOnInit(): void {
+    try {
+      const raw = localStorage.getItem('offer_lanka_settings');
+      if (raw) {
+        const parsed = JSON.parse(raw) as { emailAlerts?: boolean; nearby?: boolean; city?: string };
+        this.emailAlerts = parsed.emailAlerts ?? true;
+        this.nearby = parsed.nearby ?? true;
+        this.city = parsed.city || '';
+      }
+    } catch {
+      /* ignore invalid local storage */
+    }
+
+    this.locations.getCities().subscribe((cities) => {
+      this.cities = cities;
+      if (!this.city && cities.length) {
+        this.city = cities[0].name;
+      }
+    });
+  }
+
+  cityLabel(city: City): string {
+    const district = city.district?.name;
+    return district ? `${city.name} — ${district}` : city.name;
+  }
 
   save(): void {
     localStorage.setItem(
