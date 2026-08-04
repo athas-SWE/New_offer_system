@@ -26,12 +26,12 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
           @for (store of stores; track store.id) {
             <a [routerLink]="['/shops', store.id]" class="offer-card-lift surface-panel !p-0 overflow-hidden">
               <div class="flex items-center gap-4 p-4">
-                <img [src]="store.logoUrl" [alt]="store.name" class="h-16 w-16 rounded-2xl object-cover" />
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h2 class="font-display text-lg font-semibold text-teal-900">{{ store.name }}</h2>
+                <img [src]="store.logoUrl" [alt]="store.name" class="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex min-w-0 items-start gap-2">
+                    <h2 class="min-w-0 truncate font-display text-lg font-semibold text-teal-900">{{ store.name }}</h2>
                     @if (store.isVerified) {
-                      <mat-icon class="!text-base text-teal-600">verified</mat-icon>
+                      <mat-icon class="!text-base shrink-0 text-teal-600">verified</mat-icon>
                     }
                   </div>
                   <p class="text-sm text-[var(--color-muted)]">{{ store.city }}</p>

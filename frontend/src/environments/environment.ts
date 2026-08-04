@@ -3,6 +3,8 @@ export const environment = {
   apiUrl: 'http://localhost:3000/api',
   /** Host that serves `/uploads` (no `/api` suffix). */
   assetsUrl: 'http://localhost:3000',
+  /** Public site origin used for canonical URLs, Open Graph and sitemap. */
+  siteUrl: 'http://localhost:4200',
   firebase: {
     apiKey: 'YOUR_API_KEY',
     authDomain: 'offer-lanka.firebaseapp.com',

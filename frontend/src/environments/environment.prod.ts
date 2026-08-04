@@ -2,6 +2,8 @@ export const environment = {
   production: true,
   apiUrl: 'http://localhost:3000/api',
   assetsUrl: 'http://localhost:3000',
+  /** Update to your live frontend URL after deploy (e.g. https://offerlanka.lk). */
+  siteUrl: 'https://offerlanka.lk',
   firebase: {
     apiKey: 'YOUR_API_KEY',
     authDomain: 'offer-lanka.firebaseapp.com',

@@ -354,13 +354,13 @@ type Tab = 'overview' | 'stores' | 'offers';
                             <span class="chip">{{ row.status }}</span>
                           </div>
                           <div class="mt-3 flex flex-wrap gap-2">
-                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'ACTIVE')">
+                            <button type="button" class="btn-secondary btn-compact" (click)="setStatus(row.id, 'ACTIVE')">
                               Publish
                             </button>
-                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setStatus(row.id, 'DRAFT')">
+                            <button type="button" class="btn-secondary btn-compact" (click)="setStatus(row.id, 'DRAFT')">
                               Draft
                             </button>
-                            <label class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs" [title]="imageUploadHint">
+                            <label class="btn-secondary btn-compact !mb-0" [title]="imageUploadHint">
                               <input
                                 type="file"
                                 [accept]="acceptedImageAccept"
@@ -369,7 +369,7 @@ type Tab = 'overview' | 'stores' | 'offers';
                               />
                               {{ uploadingOfferImageId === row.id ? 'Uploading…' : 'Image' }}
                             </label>
-                            <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700" (click)="removeOffer(row.id)">
+                            <button type="button" class="btn-secondary btn-compact !text-red-700" (click)="removeOffer(row.id)">
                               Delete
                             </button>
                           </div>

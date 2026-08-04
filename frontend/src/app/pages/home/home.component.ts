@@ -32,29 +32,33 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="mt-5 flex items-center gap-3">
             <button
               type="button"
-              class="rounded-full border border-teal-200 bg-white/95 p-2 text-teal-800 shadow-sm hover:bg-white"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-teal-200 bg-white/95 text-teal-800 shadow-sm hover:bg-white"
               (click)="prevSlide()"
               aria-label="Previous slide"
             >
               <mat-icon>chevron_left</mat-icon>
             </button>
-            <div class="flex gap-2 rounded-full bg-white/90 px-3 py-2 shadow-sm">
+            <div class="flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm">
               @for (slide of slides; track slide.id; let i = $index) {
                 <button
                   type="button"
-                  [class]="
-                    'h-2.5 w-2.5 rounded-full transition ' +
-                    (i === activeSlide ? 'bg-gold-500' : 'bg-teal-200')
-                  "
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-full"
                   (click)="goToSlide(i)"
                   [attr.aria-label]="'Go to slide ' + (i + 1)"
+                  [attr.aria-current]="i === activeSlide ? 'true' : null"
                 >
+                  <span
+                    [class]="
+                      'block h-2.5 w-2.5 rounded-full transition ' +
+                      (i === activeSlide ? 'bg-gold-500' : 'bg-teal-200')
+                    "
+                  ></span>
                 </button>
               }
             </div>
             <button
               type="button"
-              class="rounded-full border border-teal-200 bg-white/95 p-2 text-teal-800 shadow-sm hover:bg-white"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-teal-200 bg-white/95 text-teal-800 shadow-sm hover:bg-white"
               (click)="nextSlide()"
               aria-label="Next slide"
             >
@@ -66,12 +70,17 @@ import { MatIconModule } from '@angular/material/icon';
     </section>
 
     <section class="page-shell animate-fade-in">
-      <div class="flex items-end justify-between gap-4">
-        <div>
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="min-w-0">
           <h2 class="section-title">Featured this week</h2>
           <p class="section-sub">Hand-picked savings across the island.</p>
         </div>
-        <a routerLink="/offers" class="text-sm font-semibold text-teal-700 hover:text-teal-900">View all</a>
+        <a
+          routerLink="/offers"
+          class="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-teal-700 hover:text-teal-900"
+        >
+          View all
+        </a>
       </div>
 
       @if (loading) {

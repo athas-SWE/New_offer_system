@@ -4,6 +4,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { StoresService } from '../../services/stores.service';
 import { OffersService } from '../../services/offers.service';
+import { SeoService } from '../../services/seo.service';
 import { Offer, Store } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
@@ -32,16 +33,22 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
           />
           <div class="absolute inset-0 bg-gradient-to-t from-teal-950/80 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8">
-            <div class="flex items-end gap-4">
-              <img [src]="store.logoUrl" [alt]="store.name" class="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-lg" />
-              <div class="text-white">
-                <div class="flex items-center gap-2">
-                  <h1 class="font-display text-3xl font-semibold sm:text-4xl">{{ store.name }}</h1>
+            <div class="flex items-end gap-3 sm:gap-4">
+              <img
+                [src]="store.logoUrl"
+                [alt]="store.name"
+                class="h-16 w-16 shrink-0 rounded-2xl border-4 border-white object-cover shadow-lg sm:h-20 sm:w-20"
+              />
+              <div class="min-w-0 flex-1 text-white">
+                <div class="flex min-w-0 items-start gap-2">
+                  <h1 class="min-w-0 break-words font-display text-2xl font-semibold sm:text-3xl md:text-4xl">
+                    {{ store.name }}
+                  </h1>
                   @if (store.isVerified) {
-                    <mat-icon class="text-gold-400">verified</mat-icon>
+                    <mat-icon class="mt-1 shrink-0 text-gold-400">verified</mat-icon>
                   }
                 </div>
-                <p class="mt-1 text-teal-100">{{ store.city }} · ★ {{ store.rating }}</p>
+                <p class="mt-1 text-sm text-teal-100 sm:text-base">{{ store.city }} · ★ {{ store.rating }}</p>
               </div>
             </div>
           </div>
@@ -124,6 +131,7 @@ export class StoreDetailsComponent implements OnInit {
   private readonly storesService = inject(StoresService);
   private readonly offersService = inject(OffersService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly seo = inject(SeoService);
 
   store?: Store;
   storeOffers: Offer[] = [];
@@ -137,9 +145,33 @@ export class StoreDetailsComponent implements OnInit {
       this.store = store;
       this.loading = false;
       this.setupMap(store);
+      this.applySeo(store, id);
       if (store) {
         this.offersService.getOffers({ storeId: store.id }).subscribe((offers) => (this.storeOffers = offers));
       }
+    });
+  }
+
+  private applySeo(store: Store | undefined, id: string): void {
+    if (!store) {
+      this.seo.update({
+        title: 'Shop not found',
+        description: 'This shop could not be found on Offer Lanka.',
+        path: `/shops/${id}`,
+        noIndex: true,
+      });
+      return;
+    }
+
+    this.seo.update({
+      title: `${store.name}${store.city ? ` — ${store.city}` : ''}`,
+      description:
+        store.description ||
+        `View deals and offers from ${store.name}${store.city ? ` in ${store.city}` : ''} on Offer Lanka.`,
+      image: store.coverUrl || store.logoUrl,
+      path: `/shops/${store.id}`,
+      keywords: [store.name, store.city, 'shop', 'deals', 'Offer Lanka'].filter(Boolean).join(', '),
+      jsonLd: this.seo.storeJsonLd(store),
     });
   }
 

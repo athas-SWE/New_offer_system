@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OffersService } from '../../services/offers.service';
+import { SeoService } from '../../services/seo.service';
 import { Offer } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
 import { formatDate, formatLkr } from '../../shared/utils';
@@ -27,7 +28,7 @@ import { formatDate, formatLkr } from '../../shared/utils';
             <p class="text-sm font-semibold uppercase tracking-wide text-teal-600">
               {{ offer.categoryName }} · {{ offer.city }}
             </p>
-            <h1 class="mt-2 font-display text-4xl font-semibold text-teal-900">{{ offer.title }}</h1>
+            <h1 class="mt-2 font-display text-2xl font-semibold text-teal-900 sm:text-3xl md:text-4xl">{{ offer.title }}</h1>
             <p class="mt-4 text-[var(--color-muted)]">{{ offer.description }}</p>
 
             <div class="mt-6 flex flex-wrap items-end gap-3">
@@ -76,6 +77,7 @@ import { formatDate, formatLkr } from '../../shared/utils';
 export class OfferDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly offersService = inject(OffersService);
+  private readonly seo = inject(SeoService);
 
   offer?: Offer;
   loading = true;
@@ -85,6 +87,34 @@ export class OfferDetailsComponent implements OnInit {
     this.offersService.getOfferById(id).subscribe((offer) => {
       this.offer = offer;
       this.loading = false;
+      this.applySeo(offer, id);
+    });
+  }
+
+  private applySeo(offer: Offer | undefined, id: string): void {
+    if (!offer) {
+      this.seo.update({
+        title: 'Offer not found',
+        description: 'This offer is unavailable or has expired on Offer Lanka.',
+        path: `/offers/${id}`,
+        noIndex: true,
+      });
+      return;
+    }
+
+    const location = [offer.storeName, offer.city].filter(Boolean).join(' in ');
+    this.seo.update({
+      title: `${offer.title}${offer.discountPercent ? ` — ${offer.discountPercent}% off` : ''}`,
+      description:
+        offer.description ||
+        `${offer.title}${location ? ` from ${location}` : ''} on Offer Lanka.`,
+      image: offer.imageUrl,
+      path: `/offers/${offer.id}`,
+      type: 'product',
+      keywords: [offer.title, offer.categoryName, offer.city, offer.storeName, 'offer', 'deal']
+        .filter(Boolean)
+        .join(', '),
+      jsonLd: this.seo.offerJsonLd(offer),
     });
   }
 

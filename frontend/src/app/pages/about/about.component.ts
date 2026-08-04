@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
   template: `
     <div class="page-shell animate-fade-in">
       <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-teal-700 via-teal-800 to-teal-900 px-6 py-14 text-white sm:px-12">
-        <p class="font-display text-4xl font-semibold sm:text-5xl">About Offer Lanka</p>
+        <h1 class="font-display text-4xl font-semibold sm:text-5xl">About Offer Lanka</h1>
         <p class="mt-4 max-w-2xl text-lg text-teal-50/90">
           We help Sri Lankans discover real savings — and help local businesses fill tables, rooms and racks.
         </p>

@@ -139,10 +139,10 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
             <div class="flex flex-wrap items-center justify-between gap-3">
               <h2 class="font-display text-xl font-semibold text-teal-900">Shops</h2>
               <div class="flex flex-wrap gap-2">
-                <button type="button" class="chip" (click)="loadBusinesses()">All</button>
-                <button type="button" class="chip" (click)="loadBusinesses('PENDING')">Pending</button>
-                <button type="button" class="chip" (click)="loadBusinesses('APPROVED')">Approved</button>
-                <button type="button" class="chip" (click)="loadBusinesses('REJECTED')">Rejected</button>
+                <button type="button" class="chip-btn" (click)="loadBusinesses()">All</button>
+                <button type="button" class="chip-btn" (click)="loadBusinesses('PENDING')">Pending</button>
+                <button type="button" class="chip-btn" (click)="loadBusinesses('APPROVED')">Approved</button>
+                <button type="button" class="chip-btn" (click)="loadBusinesses('REJECTED')">Rejected</button>
               </div>
             </div>
             @if (!businesses.length) {
@@ -162,13 +162,13 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                       <span class="chip">{{ biz.status }}</span>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2">
-                      <button type="button" class="btn-primary !px-3 !py-1.5 text-xs" (click)="setBusinessStatus(biz.id, 'APPROVED')">
+                      <button type="button" class="btn-primary btn-compact" (click)="setBusinessStatus(biz.id, 'APPROVED')">
                         Approve
                       </button>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setBusinessStatus(biz.id, 'REJECTED')">
+                      <button type="button" class="btn-secondary btn-compact" (click)="setBusinessStatus(biz.id, 'REJECTED')">
                         Reject
                       </button>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-amber-800" (click)="setBusinessStatus(biz.id, 'SUSPENDED')">
+                      <button type="button" class="btn-secondary btn-compact !text-amber-800" (click)="setBusinessStatus(biz.id, 'SUSPENDED')">
                         Suspend
                       </button>
                     </div>
@@ -184,10 +184,10 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
             <div class="flex flex-wrap items-center justify-between gap-3">
               <h2 class="font-display text-xl font-semibold text-teal-900">Offers moderation</h2>
               <div class="flex flex-wrap gap-2">
-                <button type="button" class="chip" (click)="loadOffers()">All</button>
-                <button type="button" class="chip" (click)="loadOffers('PENDING')">Pending</button>
-                <button type="button" class="chip" (click)="loadOffers('ACTIVE')">Active</button>
-                <button type="button" class="chip" (click)="loadOffers('DRAFT')">Draft</button>
+                <button type="button" class="chip-btn" (click)="loadOffers()">All</button>
+                <button type="button" class="chip-btn" (click)="loadOffers('PENDING')">Pending</button>
+                <button type="button" class="chip-btn" (click)="loadOffers('ACTIVE')">Active</button>
+                <button type="button" class="chip-btn" (click)="loadOffers('DRAFT')">Draft</button>
               </div>
             </div>
             @if (!managedOffers.length) {
@@ -211,16 +211,16 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                       <span class="chip">{{ row.status }}</span>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2">
-                      <button type="button" class="btn-primary !px-3 !py-1.5 text-xs" (click)="setOfferStatus(row.id, 'ACTIVE')">
+                      <button type="button" class="btn-primary btn-compact" (click)="setOfferStatus(row.id, 'ACTIVE')">
                         Approve / Publish
                       </button>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setOfferStatus(row.id, 'PENDING')">
+                      <button type="button" class="btn-secondary btn-compact" (click)="setOfferStatus(row.id, 'PENDING')">
                         Mark pending
                       </button>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs" (click)="setOfferStatus(row.id, 'REJECTED')">
+                      <button type="button" class="btn-secondary btn-compact" (click)="setOfferStatus(row.id, 'REJECTED')">
                         Reject
                       </button>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700" (click)="deleteOffer(row.id)">
+                      <button type="button" class="btn-secondary btn-compact !text-red-700" (click)="deleteOffer(row.id)">
                         Delete
                       </button>
                     </div>
@@ -264,7 +264,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                         <p class="font-semibold text-teal-900">{{ cat.name }}</p>
                         <p class="text-[var(--color-muted)]">{{ cat.slug }}</p>
                       </div>
-                      <button type="button" class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700" (click)="removeCategory(cat.id)">
+                      <button type="button" class="btn-secondary btn-compact !text-red-700" (click)="removeCategory(cat.id)">
                         Delete
                       </button>
                     </li>
@@ -368,13 +368,13 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                       <div class="mt-3 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          class="btn-secondary !px-3 !py-1.5 text-xs"
+                          class="btn-secondary btn-compact"
                           (click)="toggleHeroVisible(slide)"
                         >
                           {{ slide.isActive === false ? 'Make visible' : 'Hide' }}
                         </button>
                         <label
-                          class="btn-secondary !mb-0 !px-3 !py-1.5 text-xs"
+                          class="btn-secondary btn-compact !mb-0"
                           [title]="imageUploadHint"
                         >
                           <input
@@ -387,7 +387,7 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                         </label>
                         <button
                           type="button"
-                          class="btn-secondary !px-3 !py-1.5 text-xs !text-red-700"
+                          class="btn-secondary btn-compact !text-red-700"
                           (click)="removeHeroSlide(slide.id)"
                         >
                           Delete

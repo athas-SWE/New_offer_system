@@ -1,0 +1,13 @@
+# Offer Lanka — crawl rules
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /business
+Disallow: /admin
+Disallow: /profile
+Disallow: /settings
+Disallow: /favorites
+Disallow: /notifications
+
+Sitemap: https://offerlanka.lk/sitemap.xml

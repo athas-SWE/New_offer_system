@@ -11,10 +11,10 @@ import { AuthService } from '../../services/auth.service';
   imports: [RouterLink, RouterLinkActive, NgIf, AsyncPipe, MatIconModule, MatButtonModule],
   template: `
     <header
-      class="sticky top-0 z-50 border-b border-teal-200/70 bg-white/90 shadow-[0_8px_30px_rgba(0,28,61,0.08)] backdrop-blur-xl"
+      class="sticky top-0 z-50 border-b border-teal-200/70 bg-white/90 pt-[env(safe-area-inset-top)] shadow-[0_8px_30px_rgba(0,28,61,0.08)] backdrop-blur-xl"
     >
       <div
-        class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-3.5 sm:gap-5 sm:px-6 sm:py-4 lg:px-8"
+        class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2.5 sm:gap-5 sm:px-6 sm:py-3.5 lg:px-8"
       >
         <a
           routerLink="/"
@@ -25,7 +25,7 @@ import { AuthService } from '../../services/auth.service';
           <img
             src="images/logo.png"
             alt="Offer Lanka"
-            class="h-16 w-auto max-w-[200px] object-contain object-left sm:h-[4.5rem] sm:max-w-none md:h-24"
+            class="h-10 w-auto max-w-[140px] object-contain object-left sm:h-14 sm:max-w-[180px] md:h-20 md:max-w-none"
           />
         </a>
 

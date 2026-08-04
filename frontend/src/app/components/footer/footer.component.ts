@@ -18,19 +18,19 @@ import { RouterLink } from '@angular/router';
         </div>
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-gold-400">Explore</p>
-          <div class="mt-3 flex flex-col gap-2 text-sm">
-            <a routerLink="/offers" class="hover:text-gold-400">Offers</a>
-            <a routerLink="/categories" class="hover:text-gold-400">Categories</a>
-            <a routerLink="/shops" class="hover:text-gold-400">Shops</a>
-            <a routerLink="/search" class="hover:text-gold-400">Search</a>
+          <div class="mt-3 flex flex-col text-sm">
+            <a routerLink="/offers" class="inline-flex min-h-11 items-center hover:text-gold-400">Offers</a>
+            <a routerLink="/categories" class="inline-flex min-h-11 items-center hover:text-gold-400">Categories</a>
+            <a routerLink="/shops" class="inline-flex min-h-11 items-center hover:text-gold-400">Shops</a>
+            <a routerLink="/search" class="inline-flex min-h-11 items-center hover:text-gold-400">Search</a>
           </div>
         </div>
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-gold-400">Company</p>
-          <div class="mt-3 flex flex-col gap-2 text-sm">
-            <a routerLink="/about" class="hover:text-gold-400">About</a>
-            <a routerLink="/contact" class="hover:text-gold-400">Contact</a>
-            <a routerLink="/register" class="hover:text-gold-400">Register your Shop</a>
+          <div class="mt-3 flex flex-col text-sm">
+            <a routerLink="/about" class="inline-flex min-h-11 items-center hover:text-gold-400">About</a>
+            <a routerLink="/contact" class="inline-flex min-h-11 items-center hover:text-gold-400">Contact</a>
+            <a routerLink="/register" class="inline-flex min-h-11 items-center hover:text-gold-400">Register your Shop</a>
           </div>
         </div>
         <div>
