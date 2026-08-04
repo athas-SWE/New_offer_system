@@ -24,6 +24,8 @@ import { User } from '../../models';
             <p class="text-sm text-[var(--color-muted)]">{{ user.email }}</p>
             <span class="chip mt-3">{{ user.role }}</span>
             <div class="mt-6 flex flex-col gap-2">
+              <a routerLink="/favorites" class="btn-secondary !justify-start">My favourites</a>
+              <a routerLink="/notifications" class="btn-secondary !justify-start">Notifications</a>
               <a routerLink="/settings" class="btn-secondary !justify-start">Settings</a>
               <button type="button" class="btn-secondary !justify-start !text-red-700" (click)="auth.logout()">Log out</button>
             </div>

@@ -27,6 +27,13 @@ import { MatIconModule } from '@angular/material/icon';
         <h1 class="max-w-2xl animate-hero-enter text-left font-display text-xl font-medium text-white drop-shadow-md sm:text-3xl">
           {{ currentSlide?.title || 'Island deals, discovered near you' }}
         </h1>
+        <p class="mt-3 max-w-xl text-sm text-white/90 sm:text-base">
+          {{ currentSlide?.subtitle || 'Browse verified local discounts across Ampara coastal towns.' }}
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a routerLink="/offers" class="btn-gold">Browse offers</a>
+          <a routerLink="/signup" class="btn-secondary !border-white/40 !bg-white/95">Create free account</a>
+        </div>
 
         @if (slides.length > 1) {
           <div class="mt-5 flex items-center gap-3">
@@ -85,6 +92,12 @@ import { MatIconModule } from '@angular/material/icon';
 
       @if (loading) {
         <app-loading-spinner />
+      } @else if (!featured.length) {
+        <div class="surface-panel mt-8 text-center">
+          <p class="font-display text-xl text-teal-900">No featured offers right now</p>
+          <p class="mt-2 text-sm text-[var(--color-muted)]">Check back soon, or browse all active deals.</p>
+          <a routerLink="/offers" class="btn-primary mt-4">Browse all offers</a>
+        </div>
       } @else {
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (offer of featured; track offer.id) {

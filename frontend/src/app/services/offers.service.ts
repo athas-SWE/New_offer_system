@@ -18,8 +18,17 @@ interface ApiOffer {
   category?: { id?: string; name?: string } | null;
   shopId?: string;
   businessId?: string;
-  shop?: { id?: string; name?: string; address?: string | null; logoUrl?: string | null } | null;
-  business?: { id?: string; name?: string; address?: string | null } | null;
+  shop?: {
+    id?: string;
+    name?: string;
+    address?: string | null;
+    logoUrl?: string | null;
+    phone?: string | null;
+    locationUrl?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+  } | null;
+  business?: { id?: string; name?: string; address?: string | null; phone?: string | null } | null;
   cityId?: string | null;
   city?: { id?: string; name?: string } | null;
   latitude?: number | string | null;
@@ -135,6 +144,19 @@ export class OffersService {
       this.cityFromAddress(shop?.address) ||
       'Sri Lanka';
 
+    const lat =
+      row.latitude != null
+        ? Number(row.latitude)
+        : row.shop?.latitude != null
+          ? Number(row.shop.latitude)
+          : undefined;
+    const lng =
+      row.longitude != null
+        ? Number(row.longitude)
+        : row.shop?.longitude != null
+          ? Number(row.shop.longitude)
+          : undefined;
+
     return {
       id: row.id,
       title: row.title,
@@ -147,9 +169,11 @@ export class OffersService {
       categoryName: row.category?.name || 'Offer',
       storeId: row.shopId || row.businessId || shop?.id || '',
       storeName: shop?.name || 'Shop',
+      storePhone: row.shop?.phone || row.business?.phone || undefined,
+      locationUrl: row.shop?.locationUrl || undefined,
       city: cityName,
-      latitude: row.latitude != null ? Number(row.latitude) : undefined,
-      longitude: row.longitude != null ? Number(row.longitude) : undefined,
+      latitude: lat,
+      longitude: lng,
       startsAt: row.startDate || new Date().toISOString(),
       endsAt: row.endDate || new Date().toISOString(),
       isFeatured: row.status === 'ACTIVE',

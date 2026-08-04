@@ -45,6 +45,13 @@ import { AuthService } from '../../services/auth.service';
 
         <div class="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           <a
+            routerLink="/favorites"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
+            aria-label="Favourites"
+          >
+            <mat-icon>favorite_border</mat-icon>
+          </a>
+          <a
             routerLink="/search"
             class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
             aria-label="Search"
@@ -66,14 +73,24 @@ import { AuthService } from '../../services/auth.service';
               @if (auth.isShopOwner()) {
                 <a routerLink="/business" class="btn-primary !px-5 !py-2.5 !text-base">Shop</a>
               }
+              <button
+                type="button"
+                class="btn-secondary !px-5 !py-2.5 !text-base"
+                (click)="auth.logout()"
+              >
+                Log out
+              </button>
             </ng-container>
             <ng-template #guestDesktop>
               <a routerLink="/login" class="btn-secondary !px-5 !py-2.5 !text-base">Log in</a>
+              <a routerLink="/signup" class="btn-primary !hidden !px-5 !py-2.5 !text-base md:!inline-flex">
+                Sign up
+              </a>
               <a
                 routerLink="/register"
-                class="btn-gold !hidden !px-5 !py-2.5 !text-base md:!inline-flex"
+                class="btn-gold !hidden !px-5 !py-2.5 !text-base lg:!inline-flex"
               >
-                Register your Shop
+                Register shop
               </a>
             </ng-template>
           </div>
@@ -103,6 +120,13 @@ import { AuthService } from '../../services/auth.service';
                 {{ link.label }}
               </a>
             }
+            <a
+              routerLink="/favorites"
+              class="rounded-xl px-4 py-3 font-display text-lg font-semibold text-teal-900 transition hover:bg-teal-100"
+              (click)="menuOpen = false"
+            >
+              Favourites
+            </a>
             <div class="my-2 border-t border-teal-200/80"></div>
             <ng-container *ngIf="auth.currentUser$ | async as user; else guestMobile">
               <a
@@ -111,6 +135,13 @@ import { AuthService } from '../../services/auth.service';
                 (click)="menuOpen = false"
               >
                 Profile · {{ user.name }}
+              </a>
+              <a
+                routerLink="/notifications"
+                class="rounded-xl px-4 py-3 text-base font-semibold text-teal-900 hover:bg-teal-100"
+                (click)="menuOpen = false"
+              >
+                Notifications
               </a>
               @if (auth.isAdmin()) {
                 <a
@@ -130,6 +161,13 @@ import { AuthService } from '../../services/auth.service';
                   Shop dashboard
                 </a>
               }
+              <button
+                type="button"
+                class="rounded-xl px-4 py-3 text-left text-base font-semibold text-red-700 hover:bg-red-50"
+                (click)="menuOpen = false; auth.logout()"
+              >
+                Log out
+              </button>
             </ng-container>
             <ng-template #guestMobile>
               <a
@@ -140,11 +178,18 @@ import { AuthService } from '../../services/auth.service';
                 Log in
               </a>
               <a
+                routerLink="/signup"
+                class="btn-primary mt-1 !w-full !py-3 !text-base"
+                (click)="menuOpen = false"
+              >
+                Sign up
+              </a>
+              <a
                 routerLink="/register"
                 class="btn-gold mt-1 !w-full !py-3 !text-base"
                 (click)="menuOpen = false"
               >
-                Register your Shops
+                Register your shop
               </a>
             </ng-template>
           </div>

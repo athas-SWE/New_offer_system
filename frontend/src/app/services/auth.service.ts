@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, map, of, throwError, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../models';
-import { homePathForRole, isStaffRole, resolveUserRole } from '../utils/user-role';
+import { homePathForRole, resolveUserRole } from '../utils/user-role';
 
 const TOKEN_KEY = 'offer_lanka_token';
 const REFRESH_KEY = 'offer_lanka_refresh';
@@ -27,18 +27,12 @@ export class AuthService {
   }
 
   get isAuthenticated(): boolean {
-    return !!this.token && !!this.currentUser && isStaffRole(this.currentUser.role);
+    return !!this.token && !!this.currentUser;
   }
 
   login(payload: LoginRequest): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/auth/login', payload).pipe(
-      map((res) => {
-        const normalized = this.normalizeAuthResponse(res);
-        if (!isStaffRole(normalized.user.role)) {
-          throw new Error('Only admin and shop owner accounts can sign in here');
-        }
-        return normalized;
-      }),
+      map((res) => this.normalizeAuthResponse(res)),
       tap((res) => this.persistSession(res)),
       catchError((err: unknown) => {
         if (err instanceof Error && !(err instanceof HttpErrorResponse)) {
@@ -47,11 +41,6 @@ export class AuthService {
         const httpErr = err as HttpErrorResponse;
         if (httpErr.status === 0) {
           const demo = this.buildDemoSession(payload.email, 'CUSTOMER');
-          if (!isStaffRole(demo.user.role)) {
-            return throwError(
-              () => new Error('Only admin and shop owner accounts can sign in here'),
-            );
-          }
           this.persistSession(demo);
           return of(demo);
         }
@@ -88,7 +77,7 @@ export class AuthService {
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
     this.currentUserSubject.next(null);
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/']);
   }
 
   hasRole(...roles: UserRole[]): boolean {
@@ -102,6 +91,10 @@ export class AuthService {
 
   isShopOwner(): boolean {
     return this.hasRole('BUSINESS_OWNER');
+  }
+
+  isCustomer(): boolean {
+    return this.hasRole('CUSTOMER');
   }
 
   homePath(): string {
@@ -157,11 +150,7 @@ export class AuthService {
       return null;
     }
     try {
-      const user = this.normalizeUser(JSON.parse(raw) as User);
-      if (!isStaffRole(user.role)) {
-        return null;
-      }
-      return user;
+      return this.normalizeUser(JSON.parse(raw) as User);
     } catch {
       return null;
     }

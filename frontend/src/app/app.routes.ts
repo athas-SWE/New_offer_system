@@ -84,16 +84,46 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
-    path: 'register',
-    title: 'Register',
+    path: 'signup',
+    title: 'Sign up',
     data: {
       seo: {
         noIndex: true,
-        description: 'Create an Offer Lanka account for shoppers or business owners.',
+        description: 'Create a free Offer Lanka shopper account to save favourites and deals.',
+      },
+    },
+    loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
+  },
+  {
+    path: 'register',
+    title: 'Register your shop',
+    data: {
+      seo: {
+        noIndex: true,
+        description: 'Register your shop on Offer Lanka to publish deals and reach local customers.',
       },
     },
     loadComponent: () =>
       import('./pages/register/register.component').then((m) => m.RegisterComponent),
+  },
+  {
+    path: 'favorites',
+    title: 'Favourites',
+    data: {
+      seo: {
+        description: 'Your saved Offer Lanka deals and discounts.',
+      },
+    },
+    loadComponent: () =>
+      import('./pages/favorites/favorites.component').then((m) => m.FavoritesComponent),
+  },
+  {
+    path: 'notifications',
+    title: 'Notifications',
+    data: { seo: { noIndex: true } },
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/notifications/notifications.component').then((m) => m.NotificationsComponent),
   },
   {
     path: 'business',
@@ -117,14 +147,14 @@ export const routes: Routes = [
     path: 'profile',
     title: 'Profile',
     data: { seo: { noIndex: true } },
-    canActivate: [authGuard, roleGuard('ADMIN', 'BUSINESS_OWNER')],
+    canActivate: [authGuard],
     loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
     path: 'settings',
     title: 'Settings',
     data: { seo: { noIndex: true } },
-    canActivate: [authGuard, roleGuard('ADMIN', 'BUSINESS_OWNER')],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/settings/settings.component').then((m) => m.SettingsComponent),
   },

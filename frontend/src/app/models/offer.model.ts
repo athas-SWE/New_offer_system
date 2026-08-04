@@ -10,6 +10,8 @@ export interface Offer {
   categoryName?: string;
   storeId: string;
   storeName?: string;
+  storePhone?: string;
+  locationUrl?: string;
   city?: string;
   latitude?: number;
   longitude?: number;

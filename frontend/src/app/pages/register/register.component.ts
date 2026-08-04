@@ -150,6 +150,10 @@ import {
           Already registered?
           <a routerLink="/login" class="font-semibold text-teal-700 hover:underline">Log in</a>
         </p>
+        <p class="mt-2 text-center text-sm text-[var(--color-muted)]">
+          Looking for deals?
+          <a routerLink="/signup" class="font-semibold text-teal-700 hover:underline">Create a shopper account</a>
+        </p>
       </div>
     </div>
   `,

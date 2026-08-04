@@ -77,13 +77,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const roleName = user.role?.name;
-    if (roleName !== UserRole.ADMIN && roleName !== UserRole.BUSINESS_OWNER) {
-      throw new UnauthorizedException(
-        'Only admin and shop owner accounts can sign in here',
-      );
-    }
-
     const tokens = await this.issueTokens(user);
     await this.persistRefreshToken(user.id, tokens.refreshToken);
 

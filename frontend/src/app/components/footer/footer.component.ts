@@ -22,6 +22,7 @@ import { RouterLink } from '@angular/router';
             <a routerLink="/offers" class="inline-flex min-h-11 items-center hover:text-gold-400">Offers</a>
             <a routerLink="/categories" class="inline-flex min-h-11 items-center hover:text-gold-400">Categories</a>
             <a routerLink="/shops" class="inline-flex min-h-11 items-center hover:text-gold-400">Shops</a>
+            <a routerLink="/favorites" class="inline-flex min-h-11 items-center hover:text-gold-400">Favourites</a>
             <a routerLink="/search" class="inline-flex min-h-11 items-center hover:text-gold-400">Search</a>
           </div>
         </div>
