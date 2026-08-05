@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS offers (
   title VARCHAR(250) NOT NULL,
   description TEXT NULL,
   discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+  original_price DECIMAL(12,2) NULL,
+  offer_price DECIMAL(12,2) NULL,
   start_date DATETIME NOT NULL,
   end_date DATETIME NOT NULL,
   coupon_code VARCHAR(50) NULL,

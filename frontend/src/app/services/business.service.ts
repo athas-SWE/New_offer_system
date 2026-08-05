@@ -54,6 +54,8 @@ export interface CreateOfferPayload {
   title: string;
   description?: string;
   discountPercent: number;
+  /** Previous / MRP price in LKR; offer price is computed on the server. */
+  originalPrice?: number;
   startDate: string;
   endDate: string;
   couponCode?: string;

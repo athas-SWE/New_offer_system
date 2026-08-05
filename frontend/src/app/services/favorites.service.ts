@@ -15,6 +15,8 @@ interface ApiFavorite {
     title: string;
     description?: string | null;
     discountPercent?: number | string;
+    originalPrice?: number | string | null;
+    offerPrice?: number | string | null;
     image?: string | null;
     images?: Array<{ imageUrl?: string; isPrimary?: boolean }>;
     category?: { id?: string; name?: string } | null;
@@ -152,8 +154,8 @@ export class FavoritesService {
       title: offer.title,
       description: offer.description || '',
       discountPercent: discount,
-      originalPrice: 0,
-      offerPrice: 0,
+      originalPrice: Number(offer.originalPrice) || 0,
+      offerPrice: Number(offer.offerPrice) || 0,
       imageUrl,
       categoryId: offer.category?.id || '',
       categoryName: offer.category?.name || 'Offer',

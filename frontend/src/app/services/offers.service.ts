@@ -12,6 +12,8 @@ interface ApiOffer {
   title: string;
   description?: string | null;
   discountPercent?: number | string;
+  originalPrice?: number | string | null;
+  offerPrice?: number | string | null;
   image?: string | null;
   images?: Array<{ imageUrl?: string; isPrimary?: boolean }>;
   categoryId?: string | null;
@@ -162,8 +164,8 @@ export class OffersService {
       title: row.title,
       description: row.description || '',
       discountPercent: discount,
-      originalPrice: 0,
-      offerPrice: 0,
+      originalPrice: Number(row.originalPrice) || 0,
+      offerPrice: Number(row.offerPrice) || 0,
       imageUrl: primaryImage,
       categoryId: row.categoryId || row.category?.id || '',
       categoryName: row.category?.name || 'Offer',

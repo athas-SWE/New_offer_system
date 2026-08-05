@@ -41,10 +41,18 @@ export class OffersService {
     }
     if (!shopId) throw new BadRequestException('shopId is required');
 
+    const discountPercent = Number(dto.discountPercent) || 0;
+    const { originalPrice, offerPrice } = this.resolvePrices(
+      dto.originalPrice,
+      discountPercent,
+    );
+
     const offer = this.offerRepo.create({
       title: dto.title,
       description: dto.description || null,
-      discountPercent: dto.discountPercent,
+      discountPercent,
+      originalPrice,
+      offerPrice,
       startDate: new Date(dto.startDate),
       endDate: new Date(dto.endDate),
       couponCode: dto.couponCode || null,
@@ -166,6 +174,21 @@ export class OffersService {
     if (dto.categoryId !== undefined) offer.categoryId = dto.categoryId;
     if (dto.cityId !== undefined) offer.cityId = dto.cityId;
     if (dto.status !== undefined) offer.status = dto.status;
+
+    if (
+      dto.originalPrice !== undefined ||
+      dto.discountPercent !== undefined
+    ) {
+      const originalSource =
+        dto.originalPrice !== undefined
+          ? dto.originalPrice
+          : offer.originalPrice;
+      const discount = Number(offer.discountPercent) || 0;
+      const prices = this.resolvePrices(originalSource, discount);
+      offer.originalPrice = prices.originalPrice;
+      offer.offerPrice = prices.offerPrice;
+    }
+
     offer.updatedBy = actorId;
 
     await this.offerRepo.save(offer);
@@ -211,5 +234,19 @@ export class OffersService {
     if (!shop || shop.ownerId !== actorId) {
       throw new ForbiddenException('Not allowed to modify this offer');
     }
+  }
+
+  /** Derive offer price from original + discount %; clear both when no original. */
+  private resolvePrices(
+    originalPrice: number | string | null | undefined,
+    discountPercent: number,
+  ): { originalPrice: number | null; offerPrice: number | null } {
+    const original = Number(originalPrice);
+    if (!Number.isFinite(original) || original <= 0) {
+      return { originalPrice: null, offerPrice: null };
+    }
+    const percent = Math.min(100, Math.max(0, Number(discountPercent) || 0));
+    const offerPrice = Math.round(original * (1 - percent / 100) * 100) / 100;
+    return { originalPrice: original, offerPrice };
   }
 }

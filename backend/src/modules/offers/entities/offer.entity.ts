@@ -31,6 +31,24 @@ export class Offer extends BaseAuditEntity {
   })
   discountPercent: number;
 
+  @Column({
+    name: 'original_price',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  originalPrice: number | null;
+
+  @Column({
+    name: 'offer_price',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  offerPrice: number | null;
+
   @Column({ name: 'start_date', type: 'datetime' })
   startDate: Date;
 

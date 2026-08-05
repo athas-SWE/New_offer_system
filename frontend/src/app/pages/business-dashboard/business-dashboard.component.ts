@@ -14,6 +14,7 @@ import {
   validateImageFile,
 } from '../../utils/image-upload';
 import { City, LocationsService } from '../../services/locations.service';
+import { formatLkr, offerPriceFrom } from '../../shared/utils';
 
 type Tab = 'overview' | 'stores' | 'offers';
 
@@ -273,13 +274,39 @@ type Tab = 'overview' | 'stores' | 'offers';
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
+                  <label class="mb-1 block text-sm font-medium" for="originalPrice">Original price (LKR)</label>
+                  <input
+                    id="originalPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="input-field"
+                    formControlName="originalPrice"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
                   <label class="mb-1 block text-sm font-medium" for="discount">Discount %</label>
                   <input id="discount" type="number" class="input-field" formControlName="discountPercent" />
                 </div>
-                <div>
-                  <label class="mb-1 block text-sm font-medium" for="coupon">Coupon</label>
-                  <input id="coupon" class="input-field" formControlName="couponCode" placeholder="SAVE20" />
+              </div>
+              @if (previewOfferPrice > 0) {
+                <div class="rounded-xl bg-teal-50 px-4 py-3 text-sm">
+                  <p class="text-[var(--color-muted)]">Offer price (auto)</p>
+                  <p class="mt-1 flex flex-wrap items-baseline gap-2">
+                    <span class="text-lg font-bold text-teal-800">{{ formatPrice(previewOfferPrice) }}</span>
+                    <span class="text-[var(--color-muted)] line-through">{{
+                      formatPrice(previewOriginalPrice)
+                    }}</span>
+                    <span class="rounded-full bg-gold-500 px-2 py-0.5 text-xs font-bold text-white"
+                      >-{{ offerForm.controls.discountPercent.value }}%</span
+                    >
+                  </p>
                 </div>
+              }
+              <div>
+                <label class="mb-1 block text-sm font-medium" for="coupon">Coupon</label>
+                <input id="coupon" class="input-field" formControlName="couponCode" placeholder="SAVE20" />
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -435,15 +462,33 @@ export class BusinessDashboardComponent implements OnInit {
     description: [''],
   });
 
-  offerForm = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-    description: [''],
-    discountPercent: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
-    startDate: [this.today(), Validators.required],
-    endDate: [this.plusDays(30), Validators.required],
-    couponCode: [''],
-    status: ['ACTIVE' as const, Validators.required],
+  offerForm = this.fb.group({
+    title: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)]),
+    description: this.fb.nonNullable.control(''),
+    originalPrice: this.fb.control<number | null>(null, [Validators.min(0)]),
+    discountPercent: this.fb.nonNullable.control(20, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(100),
+    ]),
+    startDate: this.fb.nonNullable.control(this.today(), Validators.required),
+    endDate: this.fb.nonNullable.control(this.plusDays(30), Validators.required),
+    couponCode: this.fb.nonNullable.control(''),
+    status: this.fb.nonNullable.control('ACTIVE' as const, Validators.required),
   });
+
+  get previewOriginalPrice(): number {
+    return Number(this.offerForm.controls.originalPrice.value) || 0;
+  }
+
+  get previewOfferPrice(): number {
+    const percent = Number(this.offerForm.controls.discountPercent.value);
+    return offerPriceFrom(this.previewOriginalPrice, percent);
+  }
+
+  formatPrice(amount: number): string {
+    return formatLkr(amount);
+  }
 
   ngOnInit(): void {
     this.justRegistered = this.route.snapshot.queryParamMap.get('registered') === '1';
@@ -573,11 +618,18 @@ export class BusinessDashboardComponent implements OnInit {
     this.offerMessage = '';
     this.offerError = '';
     const value = this.offerForm.getRawValue();
+    const original = Number(value.originalPrice);
     this.businessApi
       .createOfferWithImage(
         {
-          ...value,
+          title: value.title,
+          description: value.description || undefined,
           discountPercent: Number(value.discountPercent),
+          originalPrice: Number.isFinite(original) && original > 0 ? original : undefined,
+          startDate: value.startDate,
+          endDate: value.endDate,
+          couponCode: value.couponCode || undefined,
+          status: value.status,
         },
         this.offerImageFile,
       )
@@ -591,6 +643,7 @@ export class BusinessDashboardComponent implements OnInit {
             title: '',
             description: '',
             couponCode: '',
+            originalPrice: null,
             discountPercent: 20,
             startDate: this.today(),
             endDate: this.plusDays(30),

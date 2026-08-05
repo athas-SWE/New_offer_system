@@ -32,6 +32,13 @@ export class CreateOfferDto {
   @Max(100)
   discountPercent: number;
 
+  @ApiPropertyOptional({ example: 6500, description: 'Previous / MRP price in LKR' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  originalPrice?: number;
+
   @ApiProperty()
   @IsDateString()
   startDate: string;
@@ -107,6 +114,13 @@ export class UpdateOfferDto {
   @Min(0)
   @Max(100)
   discountPercent?: number;
+
+  @ApiPropertyOptional({ example: 6500, description: 'Previous / MRP price in LKR' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  originalPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
