@@ -3,15 +3,23 @@ import { RouterLink } from '@angular/router';
 import { OffersService } from '../../services/offers.service';
 import { HeroSlidesService } from '../../services/hero-slides.service';
 import { HeroSlide } from '../../services/admin.service';
-import { Offer } from '../../models';
+import { Offer, PageMeta } from '../../models';
+import { emptyPageMeta } from '../../models/pagination.model';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, OfferCardComponent, LoadingSpinnerComponent, MatIconModule],
+  imports: [
+    RouterLink,
+    OfferCardComponent,
+    LoadingSpinnerComponent,
+    PaginationComponent,
+    MatIconModule,
+  ],
   template: `
     <section class="relative min-h-[88vh] overflow-hidden">
       @for (slide of slides; track slide.id; let i = $index) {
@@ -104,6 +112,7 @@ import { MatIconModule } from '@angular/material/icon';
             <app-offer-card [offer]="offer" />
           }
         </div>
+        <app-pagination [meta]="pageMeta" [disabled]="loading" (pageChange)="onFeaturedPage($event)" />
       }
     </section>
   `,
@@ -123,9 +132,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   };
 
   featured: Offer[] = [];
+  pageMeta: PageMeta = emptyPageMeta(1, 6);
   slides: HeroSlide[] = [this.fallbackSlide];
   activeSlide = 0;
   loading = true;
+  private readonly pageSize = 6;
 
   private timer?: ReturnType<typeof setInterval>;
 
@@ -140,14 +151,20 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.startSlideshow();
     });
 
-    this.offersService.getFeatured().subscribe((offers) => {
-      this.featured = offers.slice(0, 3);
-      this.loading = false;
-    });
+    this.loadFeatured(1);
   }
 
   ngOnDestroy(): void {
     this.stopSlideshow();
+  }
+
+  onFeaturedPage(page: number): void {
+    this.loadFeatured(page);
+    if (typeof window !== 'undefined') {
+      document
+        .querySelector('.page-shell')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   goToSlide(index: number): void {
@@ -165,6 +182,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.slides.length < 2) return;
     this.activeSlide = (this.activeSlide - 1 + this.slides.length) % this.slides.length;
     this.startSlideshow();
+  }
+
+  private loadFeatured(page: number): void {
+    this.loading = true;
+    this.offersService.getFeatured(page, this.pageSize).subscribe((res) => {
+      this.featured = res.items;
+      this.pageMeta = res.meta;
+      this.loading = false;
+    });
   }
 
   private startSlideshow(): void {

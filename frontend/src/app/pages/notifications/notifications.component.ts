@@ -5,13 +5,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { NotificationsService } from '../../services/notifications.service';
 import { AppNotification } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [RouterLink, DatePipe, MatIconModule, LoadingSpinnerComponent],
+  imports: [RouterLink, DatePipe, MatIconModule, LoadingSpinnerComponent, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back" fallbackLink="/" />
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 class="section-title">Notifications</h1>

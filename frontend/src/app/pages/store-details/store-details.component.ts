@@ -10,6 +10,7 @@ import { SeoService } from '../../services/seo.service';
 import { Offer, RentalListing, ServiceListing, Store } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 import { formatLkr, displayUrl } from '../../shared/utils';
 
 const SERVICE_PLACEHOLDER =
@@ -20,19 +21,32 @@ const RENTAL_PLACEHOLDER =
 @Component({
   selector: 'app-store-details',
   standalone: true,
-  imports: [RouterLink, MatIconModule, OfferCardComponent, LoadingSpinnerComponent],
+  imports: [
+    RouterLink,
+    MatIconModule,
+    OfferCardComponent,
+    LoadingSpinnerComponent,
+    BackLinkComponent,
+  ],
   template: `
     <div class="animate-fade-in">
       @if (loading) {
-        <div class="page-shell"><app-loading-spinner /></div>
+        <div class="page-shell">
+          <app-back-link label="Back to shops" fallbackLink="/shops" />
+          <app-loading-spinner />
+        </div>
       } @else if (!store) {
         <div class="page-shell">
+          <app-back-link label="Back to shops" fallbackLink="/shops" />
           <div class="surface-panel text-center">
             <p class="font-display text-2xl text-teal-900">Shop not found</p>
             <a routerLink="/shops" class="btn-primary mt-4">Back to shops</a>
           </div>
         </div>
       } @else {
+        <div class="page-shell !pb-0">
+          <app-back-link label="Back to shops" fallbackLink="/shops" />
+        </div>
         <section class="relative h-56 overflow-hidden sm:h-72">
           <img
             [src]="store.coverUrl || store.logoUrl"

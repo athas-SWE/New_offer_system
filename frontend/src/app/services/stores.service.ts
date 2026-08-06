@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from './api.service';
-import { Store } from '../models';
+import { PaginatedResult, Store } from '../models';
+import { normalizePageMeta } from '../models/pagination.model';
 import { resolveAssetUrl } from '../utils/asset-url';
 import { externalHref } from '../shared/utils';
 
@@ -36,19 +37,40 @@ interface PaginatedShops {
 export class StoresService {
   private readonly api = inject(ApiService);
 
-  getStores(search?: string): Observable<Store[]> {
+  getStores(search?: string, page = 1, limit = 12): Observable<Store[]> {
+    return this.getStoresPage(search, page, limit).pipe(map((res) => res.items));
+  }
+
+  getStoresPage(
+    search?: string,
+    page = 1,
+    limit = 12,
+  ): Observable<PaginatedResult<Store>> {
+    const safePage = page > 0 ? page : 1;
+    const safeLimit = limit > 0 ? limit : 12;
     const params: Record<string, string | number | boolean | undefined> = {
-      page: 1,
-      limit: 50,
+      page: safePage,
+      limit: safeLimit,
     };
     if (search?.trim()) params['search'] = search.trim();
 
     return this.api.get<PaginatedShops | ApiShop[]>('/shops', params).pipe(
       map((res) => {
         const rows = Array.isArray(res) ? res : res.data || [];
-        return rows.map((row) => this.mapShop(row));
+        const items = rows.map((row) => this.mapShop(row));
+        return {
+          items,
+          meta: normalizePageMeta(
+            Array.isArray(res) ? null : res.meta,
+            safePage,
+            safeLimit,
+            items.length,
+          ),
+        };
       }),
-      catchError(() => of([]))
+      catchError(() =>
+        of({ items: [], meta: normalizePageMeta(null, safePage, safeLimit, 0) }),
+      ),
     );
   }
 

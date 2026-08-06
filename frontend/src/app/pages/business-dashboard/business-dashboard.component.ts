@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,10 @@ import { BusinessProfile, BusinessService } from '../../services/business.servic
 import { ShopServicesService } from '../../services/shop-services.service';
 import { RentalsService } from '../../services/rentals.service';
 import { PosService } from '../../services/pos.service';
+import {
+  FacebookPageService,
+  FacebookPageStatus,
+} from '../../services/facebook-page.service';
 import {
   DashboardOfferRow,
   DashboardStats,
@@ -35,7 +39,14 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
 @Component({
   selector: 'app-business-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, MatIconModule, LoadingSpinnerComponent, ReactiveFormsModule],
+  imports: [
+    RouterLink,
+    DatePipe,
+    MatIconModule,
+    LoadingSpinnerComponent,
+    ReactiveFormsModule,
+    FormsModule,
+  ],
   template: `
     <div class="page-shell animate-fade-in">
       <div class="flex flex-wrap items-end justify-between gap-4">
@@ -363,6 +374,148 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                 <button type="submit" class="btn-primary" [disabled]="savingProfile">
                   {{ savingProfile ? 'Saving…' : 'Save social links' }}
                 </button>
+
+                <div class="border-t border-teal-100 pt-4">
+                  <h3 class="font-display text-lg font-semibold text-teal-900">Your Facebook Page</h3>
+                  <p class="mt-1 text-sm text-[var(--color-muted)]">
+                    Each shop connects its own Facebook Page. Posts go only to your Page — not a shared platform page.
+                  </p>
+                  @if (facebookStatus?.connected) {
+                    <p class="mt-3 text-sm text-teal-800">
+                      Connected as <strong>{{ facebookStatus?.pageName }}</strong>
+                      @if (facebookStatus?.pageId) {
+                        <span class="text-[var(--color-muted)]"> ({{ facebookStatus?.pageId }})</span>
+                      }
+                    </p>
+                  } @else if (facebookStatus && !facebookStatus.configured) {
+                    <p class="mt-3 text-sm text-amber-800">
+                      Server Facebook publishing is off. Ask admin to set FACEBOOK_PUBLISH_ENABLED and
+                      FACEBOOK_TOKEN_ENCRYPTION_KEY.
+                    </p>
+                  } @else {
+                    <p class="mt-3 text-sm text-[var(--color-muted)]">
+                      Not connected yet. Paste your Page access token below.
+                    </p>
+                  }
+                  @if (facebookMessage) {
+                    <p class="mt-2 text-sm font-medium text-teal-700">{{ facebookMessage }}</p>
+                  }
+                  @if (facebookError) {
+                    <p class="mt-2 text-sm text-red-700">{{ facebookError }}</p>
+                  }
+
+                  @if (facebookStatus?.configured && !facebookStatus?.connected) {
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div class="sm:col-span-2">
+                        <label class="mb-1 block text-sm font-medium" for="fbPageToken">Page access token</label>
+                        <input
+                          id="fbPageToken"
+                          class="input-field font-mono text-xs"
+                          type="password"
+                          autocomplete="off"
+                          [ngModel]="facebookPageTokenInput"
+                          (ngModelChange)="facebookPageTokenInput = $event"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="Paste your Facebook Page access token"
+                        />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium" for="fbPageId">Page ID (optional)</label>
+                        <input
+                          id="fbPageId"
+                          class="input-field"
+                          [ngModel]="facebookPageIdInput"
+                          (ngModelChange)="facebookPageIdInput = $event"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="Auto-detected from token"
+                        />
+                      </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="btn-primary"
+                        [disabled]="savingFacebookConfig || !facebookPageTokenInput.trim()"
+                        (click)="saveFacebookPageConfig()"
+                      >
+                        {{ savingFacebookConfig ? 'Saving…' : 'Save Facebook Page' }}
+                      </button>
+                      @if (facebookStatus?.oauthReady) {
+                        <button
+                          type="button"
+                          class="btn-secondary"
+                          [disabled]="connectingFacebook"
+                          (click)="connectFacebook()"
+                        >
+                          {{ connectingFacebook ? 'Opening Facebook…' : 'Connect with Facebook' }}
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  @if (facebookStatus?.connected) {
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="btn-secondary"
+                        [disabled]="savingFacebookConfig"
+                        (click)="showFacebookReconfigure = !showFacebookReconfigure"
+                      >
+                        {{ showFacebookReconfigure ? 'Cancel' : 'Update token' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-secondary !text-red-700"
+                        [disabled]="disconnectingFacebook"
+                        (click)="disconnectFacebook()"
+                      >
+                        {{ disconnectingFacebook ? 'Disconnecting…' : 'Disconnect' }}
+                      </button>
+                    </div>
+                    @if (showFacebookReconfigure) {
+                      <div class="mt-3 space-y-3">
+                        <input
+                          class="input-field font-mono text-xs"
+                          type="password"
+                          autocomplete="off"
+                          [ngModel]="facebookPageTokenInput"
+                          (ngModelChange)="facebookPageTokenInput = $event"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="New Page access token"
+                        />
+                        <button
+                          type="button"
+                          class="btn-primary"
+                          [disabled]="savingFacebookConfig || !facebookPageTokenInput.trim()"
+                          (click)="saveFacebookPageConfig()"
+                        >
+                          {{ savingFacebookConfig ? 'Saving…' : 'Update Facebook Page' }}
+                        </button>
+                      </div>
+                    }
+                  }
+
+                  @if (facebookPendingPages.length) {
+                    <div class="mt-4 rounded-xl border border-teal-100 bg-teal-50/40 p-3">
+                      <p class="text-sm font-semibold text-teal-900">Choose a Page to connect</p>
+                      <ul class="mt-2 space-y-2">
+                        @for (page of facebookPendingPages; track page.id) {
+                          <li class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-sm text-teal-900">{{ page.name }}</span>
+                            <button
+                              type="button"
+                              class="btn-secondary btn-compact"
+                              [disabled]="selectingFacebookPageId === page.id"
+                              (click)="selectFacebookPage(page.id)"
+                            >
+                              {{ selectingFacebookPageId === page.id ? 'Connecting…' : 'Use this Page' }}
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
               </form>
             }
           </div>
@@ -495,6 +648,19 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                             <button type="button" class="btn-secondary btn-compact" (click)="setStatus(row.id, 'DRAFT')">
                               Draft
                             </button>
+                            <button
+                              type="button"
+                              class="btn-secondary btn-compact"
+                              [disabled]="!facebookCanPost || postingFacebookId === row.id"
+                              [title]="
+                                facebookCanPost
+                                  ? 'Post this offer to your Facebook Page'
+                                  : 'Configure your Facebook Page under Shops → Shop social'
+                              "
+                              (click)="postOfferToFacebook(row.id)"
+                            >
+                              {{ postingFacebookId === row.id ? 'Posting…' : 'Post to Facebook' }}
+                            </button>
                             <label class="btn-secondary btn-compact !mb-0" [title]="imageUploadHint">
                               <input
                                 type="file"
@@ -508,6 +674,12 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                               Delete
                             </button>
                           </div>
+                          @if (facebookPostMessageById[row.id]) {
+                            <p class="mt-2 text-xs font-medium text-teal-700">{{ facebookPostMessageById[row.id] }}</p>
+                          }
+                          @if (facebookPostErrorById[row.id]) {
+                            <p class="mt-2 text-xs text-red-700">{{ facebookPostErrorById[row.id] }}</p>
+                          }
                         </div>
                       </div>
                     </li>
@@ -612,6 +784,19 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                             <button type="button" class="btn-secondary btn-compact" (click)="setServiceStatus(row.id, 'DRAFT')">
                               Draft
                             </button>
+                            <button
+                              type="button"
+                              class="btn-secondary btn-compact"
+                              [disabled]="!facebookCanPost || postingFacebookId === row.id"
+                              [title]="
+                                facebookCanPost
+                                  ? 'Post this service to your Facebook Page'
+                                  : 'Configure your Facebook Page under Shops → Shop social'
+                              "
+                              (click)="postServiceToFacebook(row.id)"
+                            >
+                              {{ postingFacebookId === row.id ? 'Posting…' : 'Post to Facebook' }}
+                            </button>
                             <label class="btn-secondary btn-compact !mb-0">
                               <input
                                 type="file"
@@ -629,6 +814,12 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                               Delete
                             </button>
                           </div>
+                          @if (facebookPostMessageById[row.id]) {
+                            <p class="mt-2 text-xs font-medium text-teal-700">{{ facebookPostMessageById[row.id] }}</p>
+                          }
+                          @if (facebookPostErrorById[row.id]) {
+                            <p class="mt-2 text-xs text-red-700">{{ facebookPostErrorById[row.id] }}</p>
+                          }
                         </div>
                       </div>
                     </li>
@@ -749,6 +940,19 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                             <button type="button" class="btn-secondary btn-compact" (click)="setRentalStatus(row.id, 'DRAFT')">
                               Draft
                             </button>
+                            <button
+                              type="button"
+                              class="btn-secondary btn-compact"
+                              [disabled]="!facebookCanPost || postingFacebookId === row.id"
+                              [title]="
+                                facebookCanPost
+                                  ? 'Post this rental to your Facebook Page'
+                                  : 'Configure your Facebook Page under Shops → Shop social'
+                              "
+                              (click)="postRentalToFacebook(row.id)"
+                            >
+                              {{ postingFacebookId === row.id ? 'Posting…' : 'Post to Facebook' }}
+                            </button>
                             <label class="btn-secondary btn-compact !mb-0">
                               <input
                                 type="file"
@@ -766,6 +970,12 @@ type ImageTarget = 'store' | 'offer' | 'service' | 'rental' | 'profile' | 'pos';
                               Delete
                             </button>
                           </div>
+                          @if (facebookPostMessageById[row.id]) {
+                            <p class="mt-2 text-xs font-medium text-teal-700">{{ facebookPostMessageById[row.id] }}</p>
+                          }
+                          @if (facebookPostErrorById[row.id]) {
+                            <p class="mt-2 text-xs text-red-700">{{ facebookPostErrorById[row.id] }}</p>
+                          }
                         </div>
                       </div>
                     </li>
@@ -1158,6 +1368,7 @@ export class BusinessDashboardComponent implements OnInit {
   private readonly shopServicesApi = inject(ShopServicesService);
   private readonly rentalsApi = inject(RentalsService);
   private readonly posApi = inject(PosService);
+  private readonly facebookApi = inject(FacebookPageService);
   private readonly locations = inject(LocationsService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -1212,6 +1423,21 @@ export class BusinessDashboardComponent implements OnInit {
   savingProfile = false;
   profileMessage = '';
   profileError = '';
+  facebookStatus: FacebookPageStatus | null = null;
+  facebookMessage = '';
+  facebookError = '';
+  connectingFacebook = false;
+  disconnectingFacebook = false;
+  savingFacebookConfig = false;
+  showFacebookReconfigure = false;
+  facebookPageTokenInput = '';
+  facebookPageIdInput = '';
+  selectingFacebookPageId = '';
+  facebookConnectToken = '';
+  facebookPendingPages: Array<{ id: string; name: string }> = [];
+  postingFacebookId = '';
+  facebookPostMessageById: Record<string, string> = {};
+  facebookPostErrorById: Record<string, string> = {};
   savingPosProduct = false;
   posProductMessage = '';
   posProductError = '';
@@ -1336,10 +1562,15 @@ export class BusinessDashboardComponent implements OnInit {
     return formatLkr(amount);
   }
 
+  get facebookCanPost(): boolean {
+    return Boolean(this.facebookStatus?.canPost ?? this.facebookStatus?.connected);
+  }
+
   ngOnInit(): void {
     this.justRegistered = this.route.snapshot.queryParamMap.get('registered') === '1';
     this.locations.getCities().subscribe((cities) => (this.cities = cities));
     this.reloadAll();
+    this.handleFacebookQueryParams();
   }
 
   cityLabel(city: City): string {
@@ -1388,8 +1619,174 @@ export class BusinessDashboardComponent implements OnInit {
         } else if (this.activeTab === 'pos') {
           this.activeTab = 'overview';
         }
+        this.reloadFacebookStatus();
       },
       error: () => (this.business = undefined),
+    });
+  }
+
+  reloadFacebookStatus(): void {
+    this.facebookApi.getStatus().subscribe({
+      next: (status) => (this.facebookStatus = status),
+      error: () => {
+        this.facebookStatus = {
+          connected: false,
+          canPost: false,
+          pageId: null,
+          pageName: null,
+          configured: false,
+          mode: 'none',
+        };
+      },
+    });
+  }
+
+  private handleFacebookQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const fb = params.get('facebook');
+    if (!fb) return;
+
+    this.activeTab = 'stores';
+    if (fb === 'connected') {
+      this.facebookMessage = 'Facebook Page connected successfully.';
+      this.facebookError = '';
+      this.reloadFacebookStatus();
+      return;
+    }
+    if (fb === 'error') {
+      this.facebookError = params.get('message') || 'Facebook connect failed.';
+      this.facebookMessage = '';
+      return;
+    }
+    if (fb === 'select') {
+      const token = params.get('connectToken') || '';
+      this.facebookConnectToken = token;
+      this.facebookMessage = 'Select which Facebook Page to use.';
+      this.facebookError = '';
+      if (!token) {
+        this.facebookError = 'Missing connect token — try connecting again.';
+        return;
+      }
+      this.facebookApi.getPendingPages(token).subscribe({
+        next: (res) => (this.facebookPendingPages = res.pages || []),
+        error: (err: Error) => {
+          this.facebookError = err.message || 'Could not load Facebook Pages.';
+          this.facebookPendingPages = [];
+        },
+      });
+    }
+  }
+
+  saveFacebookPageConfig(): void {
+    const token = this.facebookPageTokenInput.trim();
+    if (!token) {
+      this.facebookError = 'Paste your Facebook Page access token.';
+      return;
+    }
+    this.savingFacebookConfig = true;
+    this.facebookError = '';
+    this.facebookMessage = '';
+    this.facebookApi.configure(token, this.facebookPageIdInput.trim() || undefined).subscribe({
+      next: (status) => {
+        this.savingFacebookConfig = false;
+        this.facebookStatus = status;
+        this.facebookPageTokenInput = '';
+        this.facebookPageIdInput = '';
+        this.showFacebookReconfigure = false;
+        this.facebookMessage = `Connected as ${status.pageName || 'your Facebook Page'}.`;
+      },
+      error: (err: Error) => {
+        this.savingFacebookConfig = false;
+        this.facebookError = err.message || 'Could not save Facebook Page.';
+      },
+    });
+  }
+
+  connectFacebook(): void {
+    this.connectingFacebook = true;
+    this.facebookError = '';
+    this.facebookMessage = '';
+    this.facebookApi.getAuthUrl().subscribe({
+      next: ({ url }) => {
+        this.connectingFacebook = false;
+        window.location.href = url;
+      },
+      error: (err: Error) => {
+        this.connectingFacebook = false;
+        this.facebookError = err.message || 'Could not start Facebook connect.';
+      },
+    });
+  }
+
+  selectFacebookPage(pageId: string): void {
+    if (!this.facebookConnectToken) return;
+    this.selectingFacebookPageId = pageId;
+    this.facebookError = '';
+    this.facebookApi.selectPage(pageId, this.facebookConnectToken).subscribe({
+      next: (status) => {
+        this.selectingFacebookPageId = '';
+        this.facebookStatus = status;
+        this.facebookPendingPages = [];
+        this.facebookConnectToken = '';
+        this.facebookMessage = `Connected as ${status.pageName || 'Facebook Page'}.`;
+      },
+      error: (err: Error) => {
+        this.selectingFacebookPageId = '';
+        this.facebookError = err.message || 'Could not connect Facebook Page.';
+      },
+    });
+  }
+
+  disconnectFacebook(): void {
+    this.disconnectingFacebook = true;
+    this.facebookError = '';
+    this.facebookApi.disconnect().subscribe({
+      next: (status) => {
+        this.disconnectingFacebook = false;
+        this.facebookStatus = status;
+        this.facebookMessage = 'Facebook Page disconnected.';
+      },
+      error: (err: Error) => {
+        this.disconnectingFacebook = false;
+        this.facebookError = err.message || 'Could not disconnect Facebook.';
+      },
+    });
+  }
+
+  postOfferToFacebook(id: string): void {
+    this.postListingToFacebook(id, () => this.facebookApi.postOffer(id));
+  }
+
+  postServiceToFacebook(id: string): void {
+    this.postListingToFacebook(id, () => this.facebookApi.postService(id));
+  }
+
+  postRentalToFacebook(id: string): void {
+    this.postListingToFacebook(id, () => this.facebookApi.postRental(id));
+  }
+
+  private postListingToFacebook(
+    id: string,
+    request: () => ReturnType<FacebookPageService['postOffer']>,
+  ): void {
+    this.postingFacebookId = id;
+    this.facebookPostMessageById = { ...this.facebookPostMessageById, [id]: '' };
+    this.facebookPostErrorById = { ...this.facebookPostErrorById, [id]: '' };
+    request().subscribe({
+      next: (res) => {
+        this.postingFacebookId = '';
+        this.facebookPostMessageById = {
+          ...this.facebookPostMessageById,
+          [id]: `Posted to ${res.pageName || 'Facebook'}.`,
+        };
+      },
+      error: (err: Error) => {
+        this.postingFacebookId = '';
+        this.facebookPostErrorById = {
+          ...this.facebookPostErrorById,
+          [id]: err.message || 'Facebook post failed.',
+        };
+      },
     });
   }
 

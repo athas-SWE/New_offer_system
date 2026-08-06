@@ -4,34 +4,47 @@ import { FormsModule } from '@angular/forms';
 import { OffersService } from '../../services/offers.service';
 import { CategoriesService } from '../../services/categories.service';
 import { City, LocationsService } from '../../services/locations.service';
-import { Category, Offer, OfferFilter } from '../../models';
+import { Category, Offer, OfferFilter, PageMeta } from '../../models';
+import { emptyPageMeta } from '../../models/pagination.model';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 
 @Component({
   selector: 'app-offers',
   standalone: true,
-  imports: [FormsModule, RouterLink, OfferCardComponent, LoadingSpinnerComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    OfferCardComponent,
+    LoadingSpinnerComponent,
+    PaginationComponent,
+  ],
   template: `
     <div class="page-shell animate-fade-in">
       <h1 class="section-title">All offers</h1>
       <p class="section-sub">Search and filter deals from shops across Sri Lanka.</p>
 
       <div class="mt-8 grid gap-3 rounded-2xl border border-teal-100 bg-white/90 p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-        <input class="input-field" [(ngModel)]="filter.search" (ngModelChange)="apply()" placeholder="Search offers, shops, cities…" />
-        <select class="input-field" [(ngModel)]="filter.categoryId" (ngModelChange)="apply()">
+        <input
+          class="input-field"
+          [(ngModel)]="filter.search"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Search offers, shops, cities…"
+        />
+        <select class="input-field" [(ngModel)]="filter.categoryId" (ngModelChange)="onFilterChange()">
           <option value="">All categories</option>
           @for (cat of categories; track cat.id) {
             <option [value]="cat.id">{{ cat.name }}</option>
           }
         </select>
-        <select class="input-field" [(ngModel)]="filter.city" (ngModelChange)="apply()">
+        <select class="input-field" [(ngModel)]="filter.cityId" (ngModelChange)="onFilterChange()">
           <option value="">All cities</option>
           @for (city of cities; track city.id) {
-            <option [value]="city.name">{{ cityLabel(city) }}</option>
+            <option [value]="city.id">{{ cityLabel(city) }}</option>
           }
         </select>
-        <select class="input-field" [(ngModel)]="minDiscount" (ngModelChange)="onDiscountChange()">
+        <select class="input-field" [(ngModel)]="minDiscount" (ngModelChange)="onFilterChange()">
           <option [ngValue]="0">Any discount</option>
           <option [ngValue]="20">20%+</option>
           <option [ngValue]="30">30%+</option>
@@ -45,15 +58,16 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
         <div class="surface-panel mt-10 text-center">
           <p class="font-display text-xl text-teal-900">No offers match your filters</p>
           <p class="mt-2 text-sm text-[var(--color-muted)]">Try a different city or category.</p>
-          <a routerLink="/offers" class="btn-primary mt-4" (click)="reset()">Reset filters</a>
+          <button type="button" class="btn-primary mt-4" (click)="reset()">Reset filters</button>
         </div>
       } @else {
-        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ offers.length }} offers found</p>
+        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ pageMeta.total }} offers found</p>
         <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (offer of offers; track offer.id) {
             <app-offer-card [offer]="offer" />
           }
         </div>
+        <app-pagination [meta]="pageMeta" [disabled]="loading" (pageChange)="goToPage($event)" />
       }
     </div>
   `,
@@ -69,7 +83,9 @@ export class OffersComponent implements OnInit {
   cities: City[] = [];
   loading = true;
   minDiscount = 0;
-  filter: OfferFilter = { search: '', categoryId: '', city: '' };
+  pageMeta: PageMeta = emptyPageMeta(1, 12);
+  filter: OfferFilter = { search: '', categoryId: '', cityId: '' };
+  private readonly pageSize = 12;
 
   ngOnInit(): void {
     this.categoriesService.getCategories().subscribe((cats) => (this.categories = cats));
@@ -77,7 +93,8 @@ export class OffersComponent implements OnInit {
     this.route.queryParamMap.subscribe((params) => {
       this.filter.categoryId = params.get('categoryId') || '';
       this.filter.search = params.get('q') || '';
-      this.filter.city = params.get('city') || this.filter.city || '';
+      this.filter.cityId = params.get('cityId') || this.filter.cityId || '';
+      this.pageMeta = { ...this.pageMeta, page: 1 };
       this.apply();
     });
   }
@@ -87,21 +104,36 @@ export class OffersComponent implements OnInit {
     return district ? `${city.name} — ${district}` : city.name;
   }
 
-  apply(): void {
-    this.loading = true;
-    this.offersService.getOffers({ ...this.filter, minDiscount: this.minDiscount || undefined }).subscribe((offers) => {
-      this.offers = offers;
-      this.loading = false;
-    });
-  }
-
-  onDiscountChange(): void {
+  onFilterChange(): void {
+    this.pageMeta = { ...this.pageMeta, page: 1 };
     this.apply();
   }
 
+  goToPage(page: number): void {
+    this.pageMeta = { ...this.pageMeta, page };
+    this.apply();
+  }
+
+  apply(): void {
+    this.loading = true;
+    this.offersService
+      .getOffersPage({
+        ...this.filter,
+        minDiscount: this.minDiscount || undefined,
+        page: this.pageMeta.page,
+        limit: this.pageSize,
+      })
+      .subscribe((res) => {
+        this.offers = res.items;
+        this.pageMeta = res.meta;
+        this.loading = false;
+      });
+  }
+
   reset(): void {
-    this.filter = { search: '', categoryId: '', city: '' };
+    this.filter = { search: '', categoryId: '', cityId: '' };
     this.minDiscount = 0;
+    this.pageMeta = emptyPageMeta(1, this.pageSize);
     this.apply();
   }
 }

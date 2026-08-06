@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from './api.service';
-import { Offer, OfferFilter } from '../models';
+import { Offer, OfferFilter, PaginatedResult } from '../models';
+import { normalizePageMeta } from '../models/pagination.model';
 import { resolveAssetUrl } from '../utils/asset-url';
 
 const PLACEHOLDER_IMAGE =
@@ -74,28 +75,59 @@ export class OffersService {
   private readonly api = inject(ApiService);
 
   getOffers(filter: OfferFilter = {}): Observable<Offer[]> {
+    return this.getOffersPage(filter).pipe(map((res) => res.items));
+  }
+
+  getOffersPage(filter: OfferFilter = {}): Observable<PaginatedResult<Offer>> {
+    const page = filter.page && filter.page > 0 ? filter.page : 1;
+    const limit = filter.limit && filter.limit > 0 ? filter.limit : 12;
     const params: Record<string, string | number | boolean | undefined> = {
-      page: 1,
-      limit: 50,
+      page,
+      limit,
     };
     if (filter.search?.trim()) params['search'] = filter.search.trim();
     if (filter.categoryId) params['categoryId'] = filter.categoryId;
     if (filter.storeId) params['shopId'] = filter.storeId;
+    if (filter.cityId) params['cityId'] = filter.cityId;
 
     return this.api.get<PaginatedOffers | ApiOffer[]>('/offers', params).pipe(
       map((res) => {
         const rows = Array.isArray(res) ? res : res.data || [];
         let offers = rows.map((row) => this.mapOffer(row));
-        if (filter.city) {
+        if (filter.city && !filter.cityId) {
           const city = filter.city.toLowerCase();
           offers = offers.filter((o) => o.city?.toLowerCase() === city);
         }
         if (filter.minDiscount) {
           offers = offers.filter((o) => o.discountPercent >= filter.minDiscount!);
         }
-        return offers;
+        const meta = normalizePageMeta(
+          Array.isArray(res) ? null : res.meta,
+          page,
+          limit,
+          offers.length,
+        );
+        return { items: offers, meta };
       }),
-      catchError(() => of(this.filterMock(filter)))
+      catchError(() => {
+        const items = this.filterMock(filter);
+        const start = (page - 1) * limit;
+        const slice = items.slice(start, start + limit);
+        return of({
+          items: slice,
+          meta: normalizePageMeta(
+            {
+              total: items.length,
+              page,
+              limit,
+              totalPages: Math.ceil(items.length / limit) || 0,
+            },
+            page,
+            limit,
+            items.length,
+          ),
+        });
+      }),
     );
   }
 
@@ -106,10 +138,20 @@ export class OffersService {
     );
   }
 
-  getFeatured(): Observable<Offer[]> {
-    return this.getOffers().pipe(
-      map((offers) => offers.slice(0, 6)),
-      catchError(() => of(MOCK_OFFERS.filter((o) => o.isFeatured)))
+  getFeatured(page = 1, limit = 6): Observable<PaginatedResult<Offer>> {
+    return this.getOffersPage({ page, limit }).pipe(
+      catchError(() => {
+        const items = MOCK_OFFERS.filter((o) => o.isFeatured);
+        return of({
+          items: items.slice(0, limit),
+          meta: normalizePageMeta(
+            { total: items.length, page: 1, limit, totalPages: 1 },
+            1,
+            limit,
+            items.length,
+          ),
+        });
+      }),
     );
   }
 

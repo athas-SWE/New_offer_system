@@ -6,14 +6,16 @@ import { FavoritesService } from '../../services/favorites.service';
 import { SeoService } from '../../services/seo.service';
 import { Offer } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 import { formatDate, formatLkr } from '../../shared/utils';
 
 @Component({
   selector: 'app-offer-details',
   standalone: true,
-  imports: [RouterLink, LoadingSpinnerComponent, MatIconModule],
+  imports: [RouterLink, LoadingSpinnerComponent, MatIconModule, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back to offers" fallbackLink="/offers" />
       @if (loading) {
         <app-loading-spinner />
       } @else if (!offer) {

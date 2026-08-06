@@ -148,6 +148,10 @@ model Shop {
   website            String?         @db.VarChar(500)
   instagramUrl       String?         @map("instagram_url") @db.VarChar(500)
   facebookUrl        String?         @map("facebook_url") @db.VarChar(500)
+  facebookPageId     String?         @map("facebook_page_id") @db.VarChar(64)
+  facebookPageName   String?         @map("facebook_page_name") @db.VarChar(255)
+  facebookPageAccessToken String?    @map("facebook_page_access_token") @db.Text
+  facebookConnectedAt DateTime?      @map("facebook_connected_at") @db.DateTime(6)
   status             BusinessStatus  @default(PENDING)
   isActive           Boolean         @default(true) @map("is_active")
   posEnabled         Boolean         @default(false) @map("pos_enabled")

@@ -4,13 +4,15 @@ import { RouterLink } from '@angular/router';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, AsyncPipe, NgIf],
+  imports: [ReactiveFormsModule, RouterLink, AsyncPipe, NgIf, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back" fallbackLink="/" />
       <h1 class="section-title">Profile</h1>
       <p class="section-sub">Your Offer Lanka account details.</p>
 

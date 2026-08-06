@@ -2,8 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RentalsService } from '../../services/rentals.service';
-import { RentalListing } from '../../models';
+import { PageMeta, RentalListing } from '../../models';
+import { emptyPageMeta } from '../../models/pagination.model';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 import { formatLkr } from '../../shared/utils';
 
 const PLACEHOLDER =
@@ -12,7 +14,7 @@ const PLACEHOLDER =
 @Component({
   selector: 'app-rentals',
   standalone: true,
-  imports: [FormsModule, RouterLink, LoadingSpinnerComponent],
+  imports: [FormsModule, RouterLink, LoadingSpinnerComponent, PaginationComponent],
   template: `
     <div class="page-shell animate-fade-in">
       <h1 class="section-title">Rentals</h1>
@@ -22,7 +24,7 @@ const PLACEHOLDER =
         <input
           class="input-field max-w-xl"
           [(ngModel)]="search"
-          (ngModelChange)="apply()"
+          (ngModelChange)="onSearchChange()"
           placeholder="Search rentals…"
         />
       </div>
@@ -36,7 +38,7 @@ const PLACEHOLDER =
           <a routerLink="/shops" class="btn-primary mt-4">Browse shops</a>
         </div>
       } @else {
-        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ items.length }} rentals found</p>
+        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ pageMeta.total }} rentals found</p>
         <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of items; track item.id) {
             <a
@@ -62,6 +64,7 @@ const PLACEHOLDER =
             </a>
           }
         </div>
+        <app-pagination [meta]="pageMeta" [disabled]="loading" (pageChange)="goToPage($event)" />
       }
     </div>
   `,
@@ -72,18 +75,37 @@ export class RentalsComponent implements OnInit {
   items: RentalListing[] = [];
   loading = true;
   search = '';
+  pageMeta: PageMeta = emptyPageMeta(1, 12);
   readonly placeholder = PLACEHOLDER;
+  private readonly pageSize = 12;
 
   ngOnInit(): void {
     this.apply();
   }
 
+  onSearchChange(): void {
+    this.pageMeta = { ...this.pageMeta, page: 1 };
+    this.apply();
+  }
+
+  goToPage(page: number): void {
+    this.pageMeta = { ...this.pageMeta, page };
+    this.apply();
+  }
+
   apply(): void {
     this.loading = true;
-    this.api.getRentals({ search: this.search || undefined }).subscribe((items) => {
-      this.items = items;
-      this.loading = false;
-    });
+    this.api
+      .getRentalsPage({
+        search: this.search || undefined,
+        page: this.pageMeta.page,
+        limit: this.pageSize,
+      })
+      .subscribe((res) => {
+        this.items = res.items;
+        this.pageMeta = res.meta;
+        this.loading = false;
+      });
   }
 
   priceLabel(price: number, unit: string): string {

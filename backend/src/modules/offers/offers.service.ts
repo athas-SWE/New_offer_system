@@ -15,6 +15,7 @@ import { OfferStatus } from '../../common/enums/offer-status.enum';
 import { UserRole } from '../../common/enums/role.enum';
 import { paginate } from '../../common/dto/pagination.dto';
 import { Analytics } from '../analytics/entities/analytics.entity';
+import { FacebookService } from '../facebook/facebook.service';
 
 @Injectable()
 export class OffersService {
@@ -27,6 +28,7 @@ export class OffersService {
     private readonly shopRepo: Repository<Shop>,
     @InjectRepository(Analytics)
     private readonly analyticsRepo: Repository<Analytics>,
+    private readonly facebook: FacebookService,
   ) {}
 
   async create(dto: CreateOfferDto, actorId: string, role: string) {
@@ -224,6 +226,42 @@ export class OffersService {
     offer.updatedBy = actorId;
     await this.offerRepo.save(offer);
     return this.offerImageRepo.save(image);
+  }
+
+  async postToFacebook(id: string, actorId: string, role: string) {
+    const offer = await this.findOne(id);
+    await this.assertOwnership(offer, actorId, role);
+
+    const shop = await this.shopRepo
+      .createQueryBuilder('shop')
+      .addSelect('shop.facebookPageAccessToken')
+      .where('shop.id = :id', { id: offer.shopId })
+      .andWhere('shop.isDeleted = :deleted', { deleted: false })
+      .getOne();
+    if (!shop) {
+      throw new BadRequestException('Shop not found for this offer');
+    }
+
+    const link = `${this.facebook.getPublicSiteUrl()}/offers/${offer.id}`;
+    const priceParts: string[] = [];
+    if (offer.discountPercent != null && Number(offer.discountPercent) > 0) {
+      priceParts.push(`${Number(offer.discountPercent)}% off`);
+    }
+    if (offer.offerPrice != null) {
+      priceParts.push(`LKR ${Number(offer.offerPrice).toLocaleString('en-LK')}`);
+    } else if (offer.originalPrice != null) {
+      priceParts.push(`LKR ${Number(offer.originalPrice).toLocaleString('en-LK')}`);
+    }
+
+    return this.facebook.publishListing({
+      shop,
+      kind: 'offer',
+      title: offer.title,
+      description: offer.description,
+      priceLine: priceParts.length ? priceParts.join(' · ') : null,
+      link,
+      imageUrl: offer.image,
+    });
   }
 
   private async assertOwnership(offer: Offer, actorId: string, role: string) {

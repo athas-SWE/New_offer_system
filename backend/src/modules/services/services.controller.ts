@@ -101,6 +101,18 @@ export class ServicesController {
   }
 
   @ApiBearerAuth('access-token')
+  @Post(':id/facebook')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiOperation({ summary: 'Post this service to the shop Facebook Page' })
+  postToFacebook(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.servicesService.postToFacebook(id, actorId, role);
+  }
+
+  @ApiBearerAuth('access-token')
   @Post(':id/image')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiConsumes('multipart/form-data')

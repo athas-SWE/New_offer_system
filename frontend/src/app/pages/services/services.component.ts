@@ -2,8 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ShopServicesService } from '../../services/shop-services.service';
-import { ServiceListing } from '../../models';
+import { PageMeta, ServiceListing } from '../../models';
+import { emptyPageMeta } from '../../models/pagination.model';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 import { formatLkr } from '../../shared/utils';
 
 const PLACEHOLDER =
@@ -12,7 +14,7 @@ const PLACEHOLDER =
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [FormsModule, RouterLink, LoadingSpinnerComponent],
+  imports: [FormsModule, RouterLink, LoadingSpinnerComponent, PaginationComponent],
   template: `
     <div class="page-shell animate-fade-in">
       <h1 class="section-title">Services</h1>
@@ -22,7 +24,7 @@ const PLACEHOLDER =
         <input
           class="input-field max-w-xl"
           [(ngModel)]="search"
-          (ngModelChange)="apply()"
+          (ngModelChange)="onSearchChange()"
           placeholder="Search services…"
         />
       </div>
@@ -36,7 +38,7 @@ const PLACEHOLDER =
           <a routerLink="/shops" class="btn-primary mt-4">Browse shops</a>
         </div>
       } @else {
-        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ items.length }} services found</p>
+        <p class="mt-6 text-sm text-[var(--color-muted)]">{{ pageMeta.total }} services found</p>
         <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of items; track item.id) {
             <a
@@ -62,6 +64,7 @@ const PLACEHOLDER =
             </a>
           }
         </div>
+        <app-pagination [meta]="pageMeta" [disabled]="loading" (pageChange)="goToPage($event)" />
       }
     </div>
   `,
@@ -72,18 +75,37 @@ export class ServicesComponent implements OnInit {
   items: ServiceListing[] = [];
   loading = true;
   search = '';
+  pageMeta: PageMeta = emptyPageMeta(1, 12);
   readonly placeholder = PLACEHOLDER;
+  private readonly pageSize = 12;
 
   ngOnInit(): void {
     this.apply();
   }
 
+  onSearchChange(): void {
+    this.pageMeta = { ...this.pageMeta, page: 1 };
+    this.apply();
+  }
+
+  goToPage(page: number): void {
+    this.pageMeta = { ...this.pageMeta, page };
+    this.apply();
+  }
+
   apply(): void {
     this.loading = true;
-    this.api.getServices({ search: this.search || undefined }).subscribe((items) => {
-      this.items = items;
-      this.loading = false;
-    });
+    this.api
+      .getServicesPage({
+        search: this.search || undefined,
+        page: this.pageMeta.page,
+        limit: this.pageSize,
+      })
+      .subscribe((res) => {
+        this.items = res.items;
+        this.pageMeta = res.meta;
+        this.loading = false;
+      });
   }
 
   priceLabel(price: number, unit: string): string {

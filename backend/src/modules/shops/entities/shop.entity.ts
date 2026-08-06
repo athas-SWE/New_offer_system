@@ -44,6 +44,25 @@ export class Shop extends BaseAuditEntity {
   @Column({ name: 'facebook_url', type: 'varchar', length: 500, nullable: true })
   facebookUrl: string | null;
 
+  /** Connected Facebook Page id (Graph API). */
+  @Column({ name: 'facebook_page_id', type: 'varchar', length: 64, nullable: true })
+  facebookPageId: string | null;
+
+  @Column({ name: 'facebook_page_name', type: 'varchar', length: 255, nullable: true })
+  facebookPageName: string | null;
+
+  /** AES-encrypted Page access token — never expose in API responses. */
+  @Column({
+    name: 'facebook_page_access_token',
+    type: 'text',
+    nullable: true,
+    select: false,
+  })
+  facebookPageAccessToken: string | null;
+
+  @Column({ name: 'facebook_connected_at', type: 'datetime', nullable: true })
+  facebookConnectedAt: Date | null;
+
   @Column({ type: 'enum', enum: ShopStatus, default: ShopStatus.PENDING })
   status: ShopStatus;
 

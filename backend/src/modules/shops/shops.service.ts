@@ -22,6 +22,7 @@ import {
 } from './dto/shop.dto';
 import { paginate } from '../../common/dto/pagination.dto';
 import { resolveLocationFields } from './utils/parse-maps-url';
+import { FacebookService } from '../facebook/facebook.service';
 
 @Injectable()
 export class ShopsService {
@@ -33,7 +34,18 @@ export class ShopsService {
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
     private readonly dataSource: DataSource,
+    private readonly facebook: FacebookService,
   ) {}
+
+  /** Never expose encrypted Page tokens in API responses. */
+  sanitizeShop<T extends Partial<Shop> | null | undefined>(shop: T): T {
+    if (!shop || typeof shop !== 'object') return shop;
+    const copy = { ...shop } as T & { facebookPageAccessToken?: string | null };
+    if ('facebookPageAccessToken' in copy) {
+      delete copy.facebookPageAccessToken;
+    }
+    return copy;
+  }
 
   async register(dto: RegisterShopDto) {
     const existingEmail = await this.userRepo.findOne({
@@ -146,7 +158,12 @@ export class ShopsService {
       .take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-    return paginate(data, total, page, limit);
+    return paginate(
+      data.map((s) => this.sanitizeShop(s)),
+      total,
+      page,
+      limit,
+    );
   }
 
   async findOne(id: string) {
@@ -159,7 +176,7 @@ export class ShopsService {
       .andWhere('shop.isDeleted = :deleted', { deleted: false })
       .getOne();
     if (!shop) throw new NotFoundException('Shop not found');
-    return shop;
+    return this.sanitizeShop(shop);
   }
 
   async findMine(ownerId: string) {
@@ -171,7 +188,194 @@ export class ShopsService {
     if (!shops.length) throw new NotFoundException('Shop not found for this user');
     // Primary shop + siblings for dashboard compatibility
     const primary = shops[0];
-    return { ...primary, shops };
+    const sanitizedShops = shops.map((s) => this.sanitizeShop(s));
+    return { ...this.sanitizeShop(primary), shops: sanitizedShops };
+  }
+
+  async getOwnedPrimaryShop(ownerId: string): Promise<Shop> {
+    const shop = await this.shopRepo.findOne({
+      where: { ownerId, isDeleted: false },
+      order: { createdDate: 'ASC' },
+    });
+    if (!shop) throw new NotFoundException('Shop not found for this user');
+    return shop;
+  }
+
+  async assertOwnedShop(shopId: string, actorId: string, role: string): Promise<Shop> {
+    const shop = await this.shopRepo.findOne({
+      where: { id: shopId, isDeleted: false },
+    });
+    if (!shop) throw new NotFoundException('Shop not found');
+    if (role !== UserRole.ADMIN && shop.ownerId !== actorId) {
+      throw new ForbiddenException('Not allowed');
+    }
+    return shop;
+  }
+
+  getFacebookAuthUrl(userId: string, shopId: string) {
+    this.facebook.assertOAuthReady();
+    return { url: this.facebook.getAuthUrl(userId, shopId) };
+  }
+
+  async getFacebookStatus(shop: Shop) {
+    const shopConnected = Boolean(
+      shop.facebookPageId && shop.facebookPageName,
+    );
+
+    return {
+      connected: shopConnected,
+      canPost: this.facebook.isPublishEnabled() && shopConnected,
+      pageId: shop.facebookPageId || null,
+      pageName: shop.facebookPageName || null,
+      connectedAt: shop.facebookConnectedAt || null,
+      configured: this.facebook.isReady(),
+      oauthReady: this.facebook.isOAuthReady(),
+      publishEnabled: this.facebook.isPublishEnabled(),
+      mode: shopConnected ? ('shop' as const) : ('none' as const),
+    };
+  }
+
+  /** Each business configures their own Page access token. */
+  async configureFacebookPage(
+    actorId: string,
+    role: string,
+    pageAccessToken: string,
+    pageId?: string,
+  ) {
+    this.facebook.assertPublishReady();
+    const shop = await this.getOwnedPrimaryShop(actorId);
+    if (role !== UserRole.ADMIN && shop.ownerId !== actorId) {
+      throw new ForbiddenException('Not allowed');
+    }
+
+    const page = await this.facebook.resolvePageFromToken(
+      pageAccessToken,
+      pageId,
+    );
+    await this.saveFacebookPage(
+      shop.id,
+      page.pageId,
+      page.pageName,
+      pageAccessToken.trim(),
+      actorId,
+    );
+    const refreshed = await this.getOwnedPrimaryShop(actorId);
+    return this.getFacebookStatus(refreshed);
+  }
+
+  /** Load shop including encrypted Page token (for posting). */
+  async getShopWithFacebookToken(shopId: string): Promise<Shop> {
+    const shop = await this.shopRepo
+      .createQueryBuilder('shop')
+      .addSelect('shop.facebookPageAccessToken')
+      .where('shop.id = :id', { id: shopId })
+      .andWhere('shop.isDeleted = :deleted', { deleted: false })
+      .getOne();
+    if (!shop) throw new NotFoundException('Shop not found');
+    return shop;
+  }
+
+  async handleFacebookCallback(code: string, state: string) {
+    const { userId, shopId } = this.facebook.verifyState(state);
+    await this.assertOwnedShop(shopId, userId, UserRole.BUSINESS_OWNER);
+    const pages = await this.facebook.exchangeCodeForPages(code);
+
+    if (pages.length === 1) {
+      await this.saveFacebookPage(shopId, pages[0].id, pages[0].name, pages[0].accessToken, userId);
+      return {
+        redirectPath: '/business?facebook=connected',
+      };
+    }
+
+    const connectToken = this.facebook.createPendingConnect(userId, shopId, pages);
+    return {
+      redirectPath: `/business?facebook=select&connectToken=${encodeURIComponent(connectToken)}`,
+    };
+  }
+
+  listFacebookPendingPages(connectToken: string, userId: string) {
+    const pending = this.facebook.getPendingConnect(connectToken);
+    if (pending.userId !== userId) {
+      throw new ForbiddenException('Not allowed');
+    }
+    return {
+      shopId: pending.shopId,
+      pages: this.facebook.listPendingPages(connectToken),
+    };
+  }
+
+  async selectFacebookPage(
+    actorId: string,
+    role: string,
+    pageId: string,
+    connectToken?: string,
+  ) {
+    if (!connectToken) {
+      throw new BadRequestException('connectToken is required to select a Facebook Page');
+    }
+    const pending = this.facebook.consumePendingConnect(connectToken);
+    if (role !== UserRole.ADMIN && pending.userId !== actorId) {
+      throw new ForbiddenException('Not allowed');
+    }
+    await this.assertOwnedShop(pending.shopId, actorId, role);
+    const page = pending.pages.find((p) => p.id === pageId);
+    if (!page) {
+      throw new BadRequestException('Selected Facebook Page is not in the authorized list');
+    }
+    await this.saveFacebookPage(
+      pending.shopId,
+      page.id,
+      page.name,
+      page.accessToken,
+      actorId,
+    );
+    const connected = await this.shopRepo.findOne({
+      where: { id: pending.shopId, isDeleted: false },
+    });
+    if (!connected) throw new NotFoundException('Shop not found');
+    return this.getFacebookStatus(connected);
+  }
+
+  async disconnectFacebook(actorId: string, role: string) {
+    const shop = await this.getOwnedPrimaryShop(actorId);
+    if (role !== UserRole.ADMIN && shop.ownerId !== actorId) {
+      throw new ForbiddenException('Not allowed');
+    }
+    await this.shopRepo.update(
+      { id: shop.id },
+      {
+        facebookPageId: null,
+        facebookPageName: null,
+        facebookPageAccessToken: null,
+        facebookConnectedAt: null,
+        updatedBy: actorId,
+      },
+    );
+    const refreshed = await this.getOwnedPrimaryShop(actorId);
+    return this.getFacebookStatus(refreshed);
+  }
+
+  private async saveFacebookPage(
+    shopId: string,
+    pageId: string,
+    pageName: string,
+    accessToken: string,
+    actorId: string,
+  ) {
+    const shop = await this.shopRepo.findOne({
+      where: { id: shopId, isDeleted: false },
+    });
+    if (!shop) throw new NotFoundException('Shop not found');
+    await this.shopRepo.update(
+      { id: shopId },
+      {
+        facebookPageId: pageId,
+        facebookPageName: pageName,
+        facebookPageAccessToken: this.facebook.encryptToken(accessToken),
+        facebookConnectedAt: new Date(),
+        updatedBy: actorId,
+      },
+    );
   }
 
   async update(id: string, dto: UpdateShopDto, actorId: string, role: string) {

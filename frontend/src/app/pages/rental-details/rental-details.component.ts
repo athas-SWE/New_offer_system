@@ -5,6 +5,7 @@ import { RentalsService } from '../../services/rentals.service';
 import { SeoService } from '../../services/seo.service';
 import { RentalListing } from '../../models';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 import { formatLkr } from '../../shared/utils';
 
 const PLACEHOLDER =
@@ -13,9 +14,10 @@ const PLACEHOLDER =
 @Component({
   selector: 'app-rental-details',
   standalone: true,
-  imports: [RouterLink, LoadingSpinnerComponent, MatIconModule],
+  imports: [RouterLink, LoadingSpinnerComponent, MatIconModule, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back to rentals" fallbackLink="/rentals" />
       @if (loading) {
         <app-loading-spinner />
       } @else if (!item) {

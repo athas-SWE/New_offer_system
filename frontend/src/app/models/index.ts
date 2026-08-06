@@ -7,3 +7,4 @@ export * from './dashboard.model';
 export * from './service-listing.model';
 export * from './rental.model';
 export * from './pos.model';
+export * from './pagination.model';

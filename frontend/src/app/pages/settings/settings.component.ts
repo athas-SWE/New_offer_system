@@ -2,13 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { City, LocationsService } from '../../services/locations.service';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back" fallbackLink="/" />
       <h1 class="section-title">Settings</h1>
       <p class="section-sub">Preferences for how Offer Lanka works for you.</p>
 

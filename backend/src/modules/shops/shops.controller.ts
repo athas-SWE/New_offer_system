@@ -8,6 +8,7 @@ import {
   Body,
   Param,
   Query,
+  Res,
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
@@ -20,6 +21,8 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { ShopsService } from './shops.service';
 import {
   RegisterShopDto,
@@ -29,6 +32,10 @@ import {
   UpdateShopPosDto,
   ShopQueryDto,
 } from './dto/shop.dto';
+import {
+  ConfigureFacebookPageDto,
+  SelectFacebookPageDto,
+} from '../facebook/dto/facebook.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/role.enum';
@@ -42,6 +49,7 @@ export class ShopsController {
   constructor(
     private readonly shopsService: ShopsService,
     private readonly cloudinary: CloudinaryService,
+    private readonly config: ConfigService,
   ) {}
 
   @Public()
@@ -65,6 +73,124 @@ export class ShopsController {
   @ApiOperation({ summary: 'Get my shop(s)' })
   findMine(@CurrentUser('id') userId: string) {
     return this.shopsService.findMine(userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('me/facebook/auth-url')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get Facebook OAuth URL to connect a Page' })
+  async facebookAuthUrl(@CurrentUser('id') userId: string) {
+    const shop = await this.shopsService.getOwnedPrimaryShop(userId);
+    return this.shopsService.getFacebookAuthUrl(userId, shop.id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('me/facebook/status')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Facebook Page connection status for my shop' })
+  async facebookStatus(@CurrentUser('id') userId: string) {
+    const shop = await this.shopsService.getOwnedPrimaryShop(userId);
+    return this.shopsService.getFacebookStatus(shop);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('me/facebook/pending-pages')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'List Pages available after OAuth (multi-page)' })
+  facebookPendingPages(
+    @CurrentUser('id') userId: string,
+    @Query('connectToken') connectToken: string,
+  ) {
+    if (!connectToken) {
+      throw new BadRequestException('connectToken is required');
+    }
+    return this.shopsService.listFacebookPendingPages(connectToken, userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('me/facebook/configure')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Configure this shop’s own Facebook Page access token',
+  })
+  configureFacebookPage(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: ConfigureFacebookPageDto,
+  ) {
+    return this.shopsService.configureFacebookPage(
+      userId,
+      role,
+      dto.pageAccessToken,
+      dto.pageId,
+    );
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('me/facebook/select-page')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Select which Facebook Page to connect (OAuth)' })
+  selectFacebookPage(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: SelectFacebookPageDto,
+  ) {
+    return this.shopsService.selectFacebookPage(
+      userId,
+      role,
+      dto.pageId,
+      dto.connectToken,
+    );
+  }
+
+  @ApiBearerAuth('access-token')
+  @Delete('me/facebook')
+  @Roles(UserRole.BUSINESS_OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Disconnect Facebook Page from my shop' })
+  disconnectFacebook(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.shopsService.disconnectFacebook(userId, role);
+  }
+
+  @Public()
+  @Get('facebook/callback')
+  @ApiOperation({ summary: 'Facebook OAuth callback (redirects to business dashboard)' })
+  async facebookCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('error') error: string,
+    @Query('error_description') errorDescription: string,
+    @Res() res: Response,
+  ) {
+    const site = (
+      this.config.get<string>('PUBLIC_SITE_URL') ||
+      this.config.get<string>('CORS_ORIGIN') ||
+      'http://localhost:4200'
+    )
+      .split(',')[0]
+      .trim()
+      .replace(/\/$/, '');
+
+    if (error) {
+      const msg = encodeURIComponent(errorDescription || error || 'Facebook auth failed');
+      return res.redirect(`${site}/business?facebook=error&message=${msg}`);
+    }
+    if (!code || !state) {
+      return res.redirect(
+        `${site}/business?facebook=error&message=${encodeURIComponent('Missing OAuth code')}`,
+      );
+    }
+    try {
+      const result = await this.shopsService.handleFacebookCallback(code, state);
+      return res.redirect(`${site}${result.redirectPath}`);
+    } catch (err) {
+      const msg = encodeURIComponent(
+        err instanceof Error ? err.message : 'Facebook connect failed',
+      );
+      return res.redirect(`${site}/business?facebook=error&message=${msg}`);
+    }
   }
 
   @Public()

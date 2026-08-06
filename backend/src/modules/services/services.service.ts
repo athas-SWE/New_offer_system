@@ -14,6 +14,7 @@ import { PriceUnit } from '../../common/enums/price-unit.enum';
 import { UserRole } from '../../common/enums/role.enum';
 import { ShopStatus } from '../../common/enums/shop-status.enum';
 import { paginate } from '../../common/dto/pagination.dto';
+import { FacebookService } from '../facebook/facebook.service';
 
 @Injectable()
 export class ServicesService {
@@ -22,6 +23,7 @@ export class ServicesService {
     private readonly serviceRepo: Repository<ServiceListing>,
     @InjectRepository(Shop)
     private readonly shopRepo: Repository<Shop>,
+    private readonly facebook: FacebookService,
   ) {}
 
   async create(dto: CreateServiceDto, actorId: string, role: string) {
@@ -148,6 +150,43 @@ export class ServicesService {
     listing.updatedBy = actorId;
     await this.serviceRepo.save(listing);
     return this.findOne(id);
+  }
+
+  async postToFacebook(id: string, actorId: string, role: string) {
+    const listing = await this.findOne(id);
+    await this.assertOwnership(listing, actorId, role);
+
+    const shop = await this.shopRepo
+      .createQueryBuilder('shop')
+      .addSelect('shop.facebookPageAccessToken')
+      .where('shop.id = :id', { id: listing.shopId })
+      .andWhere('shop.isDeleted = :deleted', { deleted: false })
+      .getOne();
+    if (!shop) {
+      throw new BadRequestException('Shop not found for this service');
+    }
+
+    const link = `${this.facebook.getPublicSiteUrl()}/services/${listing.id}`;
+    let priceLine: string | null = null;
+    if (listing.price != null) {
+      const unit =
+        listing.priceUnit === PriceUnit.HOURLY || listing.priceUnit === PriceUnit.PER_HOUR
+          ? '/hour'
+          : listing.priceUnit === PriceUnit.FROM
+            ? ' from'
+            : '';
+      priceLine = `LKR ${Number(listing.price).toLocaleString('en-LK')}${unit}`;
+    }
+
+    return this.facebook.publishListing({
+      shop,
+      kind: 'service',
+      title: listing.title,
+      description: listing.description,
+      priceLine,
+      link,
+      imageUrl: listing.image,
+    });
   }
 
   private async resolveShopId(

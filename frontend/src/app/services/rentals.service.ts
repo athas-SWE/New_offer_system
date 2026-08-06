@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, of, switchMap, catchError } from 'rxjs';
 import { ApiService } from './api.service';
-import { ManagedListingRow, RentalListing } from '../models';
+import { ManagedListingRow, PaginatedResult, RentalListing } from '../models';
+import { normalizePageMeta } from '../models/pagination.model';
 import { resolveAssetUrl } from '../utils/asset-url';
 
 interface ApiRentalRow {
@@ -48,19 +49,45 @@ export class RentalsService {
     shopId?: string;
     cityId?: string;
     categoryId?: string;
+    page?: number;
+    limit?: number;
   }): Observable<RentalListing[]> {
+    return this.getRentalsPage(params).pipe(map((res) => res.items));
+  }
+
+  getRentalsPage(params?: {
+    search?: string;
+    shopId?: string;
+    cityId?: string;
+    categoryId?: string;
+    page?: number;
+    limit?: number;
+  }): Observable<PaginatedResult<RentalListing>> {
+    const page = params?.page && params.page > 0 ? params.page : 1;
+    const limit = params?.limit && params.limit > 0 ? params.limit : 12;
     return this.api
       .get<Paginated<ApiRentalRow> | ApiRentalRow[]>('/rentals', {
-        page: 1,
-        limit: 50,
         ...params,
+        page,
+        limit,
       })
       .pipe(
         map((res) => {
           const rows = Array.isArray(res) ? res : res.data || [];
-          return rows.map((row) => this.mapPublic(row));
+          const items = rows.map((row) => this.mapPublic(row));
+          return {
+            items,
+            meta: normalizePageMeta(
+              Array.isArray(res) ? null : res.meta,
+              page,
+              limit,
+              items.length,
+            ),
+          };
         }),
-        catchError(() => of([])),
+        catchError(() =>
+          of({ items: [], meta: normalizePageMeta(null, page, limit, 0) }),
+        ),
       );
   }
 

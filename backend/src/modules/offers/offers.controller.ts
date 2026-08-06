@@ -104,6 +104,18 @@ export class OffersController {
   }
 
   @ApiBearerAuth('access-token')
+  @Post(':id/facebook')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
+  @ApiOperation({ summary: 'Post this offer to the shop Facebook Page' })
+  postToFacebook(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.offersService.postToFacebook(id, actorId, role);
+  }
+
+  @ApiBearerAuth('access-token')
   @Post(':id/images')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS_OWNER)
   @ApiConsumes('multipart/form-data')

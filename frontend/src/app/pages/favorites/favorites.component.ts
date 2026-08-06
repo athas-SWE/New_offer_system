@@ -4,13 +4,15 @@ import { FavoritesService } from '../../services/favorites.service';
 import { Offer } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { BackLinkComponent } from '../../components/back-link/back-link.component';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [RouterLink, OfferCardComponent, LoadingSpinnerComponent],
+  imports: [RouterLink, OfferCardComponent, LoadingSpinnerComponent, BackLinkComponent],
   template: `
     <div class="page-shell animate-fade-in">
+      <app-back-link label="Back" fallbackLink="/" />
       <h1 class="section-title">Favourites</h1>
       <p class="section-sub">Offers you saved for later.</p>
 

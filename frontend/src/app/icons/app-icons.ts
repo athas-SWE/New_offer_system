@@ -71,4 +71,5 @@ export const MATERIAL_ICON = {
   edit: 'edit',
   close: 'close',
   menu: 'menu',
+  back: 'arrow_back',
 } as const;

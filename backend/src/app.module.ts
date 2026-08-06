@@ -24,6 +24,7 @@ import { RentalsModule } from './modules/rentals/rentals.module';
 import { PosModule } from './modules/pos/pos.module';
 import { SeedModule } from './seed/seed.module';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { FacebookModule } from './modules/facebook/facebook.module';
 
 import { User } from './modules/users/entities/user.entity';
 import { Role } from './modules/users/entities/role.entity';
@@ -49,6 +50,7 @@ import { HeroSlide } from './modules/hero-slides/entities/hero-slide.entity';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     CloudinaryModule,
+    FacebookModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [

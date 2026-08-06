@@ -27,8 +27,11 @@ export interface OfferFilter {
   categoryId?: string;
   storeId?: string;
   city?: string;
+  cityId?: string;
   minDiscount?: number;
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  page?: number;
+  limit?: number;
 }
