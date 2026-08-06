@@ -3,6 +3,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from './api.service';
 import { Store } from '../models';
 import { resolveAssetUrl } from '../utils/asset-url';
+import { externalHref } from '../shared/utils';
 
 const PLACEHOLDER_LOGO =
   'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&q=80';
@@ -15,6 +16,9 @@ interface ApiShop {
   locationUrl?: string | null;
   phone?: string | null;
   logoUrl?: string | null;
+  website?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
   isActive?: boolean;
@@ -68,8 +72,11 @@ export class StoresService {
       logoUrl: resolveAssetUrl(row.logoUrl) || PLACEHOLDER_LOGO,
       city: cityName,
       address: row.address || '',
-      locationUrl: row.locationUrl || undefined,
+      locationUrl: externalHref(row.locationUrl),
       phone: row.phone || undefined,
+      website: externalHref(row.website),
+      instagramUrl: externalHref(row.instagramUrl),
+      facebookUrl: externalHref(row.facebookUrl),
       ownerName: row.owner?.name || undefined,
       rating: 0,
       offerCount: 0,

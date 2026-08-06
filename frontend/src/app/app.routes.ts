@@ -35,6 +35,44 @@ export const routes: Routes = [
       import('./pages/offer-details/offer-details.component').then((m) => m.OfferDetailsComponent),
   },
   {
+    path: 'services',
+    title: 'Services',
+    data: {
+      seo: {
+        description: 'Browse services from local shops on Offer Lanka across Sri Lanka.',
+        keywords: 'services Sri Lanka, local services, Offer Lanka',
+      },
+    },
+    loadComponent: () =>
+      import('./pages/services/services.component').then((m) => m.ServicesComponent),
+  },
+  {
+    path: 'services/:id',
+    title: 'Service Details',
+    data: { seo: { dynamic: true } },
+    loadComponent: () =>
+      import('./pages/service-details/service-details.component').then((m) => m.ServiceDetailsComponent),
+  },
+  {
+    path: 'rentals',
+    title: 'Rentals',
+    data: {
+      seo: {
+        description: 'Find rentals and hire options from local shops on Offer Lanka.',
+        keywords: 'rentals Sri Lanka, hire, Offer Lanka',
+      },
+    },
+    loadComponent: () =>
+      import('./pages/rentals/rentals.component').then((m) => m.RentalsComponent),
+  },
+  {
+    path: 'rentals/:id',
+    title: 'Rental Details',
+    data: { seo: { dynamic: true } },
+    loadComponent: () =>
+      import('./pages/rental-details/rental-details.component').then((m) => m.RentalDetailsComponent),
+  },
+  {
     path: 'categories',
     title: 'Categories',
     data: {

@@ -4,6 +4,10 @@ import { ShopStatus } from '../../../common/enums/shop-status.enum';
 import { User } from '../../users/entities/user.entity';
 import { City } from '../../locations/entities/city.entity';
 import { Offer } from '../../offers/entities/offer.entity';
+import { ServiceListing } from '../../services/entities/service-listing.entity';
+import { Rental } from '../../rentals/entities/rental.entity';
+import { PosProduct } from '../../pos/entities/pos-product.entity';
+import { PosSale } from '../../pos/entities/pos-sale.entity';
 
 @Entity('shops')
 export class Shop extends BaseAuditEntity {
@@ -31,11 +35,24 @@ export class Shop extends BaseAuditEntity {
   @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
   logoUrl: string | null;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  website: string | null;
+
+  @Column({ name: 'instagram_url', type: 'varchar', length: 500, nullable: true })
+  instagramUrl: string | null;
+
+  @Column({ name: 'facebook_url', type: 'varchar', length: 500, nullable: true })
+  facebookUrl: string | null;
+
   @Column({ type: 'enum', enum: ShopStatus, default: ShopStatus.PENDING })
   status: ShopStatus;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
+
+  /** Admin-controlled upgrade: Shopper POS access */
+  @Column({ name: 'pos_enabled', type: 'boolean', default: false })
+  posEnabled: boolean;
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   latitude: number | null;
@@ -59,4 +76,16 @@ export class Shop extends BaseAuditEntity {
 
   @OneToMany(() => Offer, (offer) => offer.shop)
   offers: Offer[];
+
+  @OneToMany(() => ServiceListing, (service) => service.shop)
+  services: ServiceListing[];
+
+  @OneToMany(() => Rental, (rental) => rental.shop)
+  rentals: Rental[];
+
+  @OneToMany(() => PosProduct, (product) => product.shop)
+  posProducts: PosProduct[];
+
+  @OneToMany(() => PosSale, (sale) => sale.shop)
+  posSales: PosSale[];
 }

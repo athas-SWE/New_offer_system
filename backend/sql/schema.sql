@@ -69,9 +69,14 @@ CREATE TABLE IF NOT EXISTS shops (
   email VARCHAR(180) NULL,
   phone VARCHAR(30) NULL,
   address VARCHAR(500) NULL,
+  location_url VARCHAR(1000) NULL,
   logo_url VARCHAR(500) NULL,
+  website VARCHAR(500) NULL,
+  instagram_url VARCHAR(500) NULL,
+  facebook_url VARCHAR(500) NULL,
   status ENUM('PENDING','APPROVED','REJECTED','SUSPENDED') NOT NULL DEFAULT 'PENDING',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
+  pos_enabled TINYINT(1) NOT NULL DEFAULT 0,
   latitude DECIMAL(10,7) NULL,
   longitude DECIMAL(10,7) NULL,
   owner_id CHAR(36) NOT NULL,
@@ -144,6 +149,101 @@ CREATE TABLE IF NOT EXISTS offer_images (
   updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
   CONSTRAINT fk_offer_images_offer FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS services (
+  id CHAR(36) PRIMARY KEY,
+  title VARCHAR(250) NOT NULL,
+  description TEXT NULL,
+  price DECIMAL(12,2) NULL,
+  price_unit ENUM('FIXED','FROM','HOURLY','PER_DAY','PER_HOUR') NOT NULL DEFAULT 'FIXED',
+  image VARCHAR(500) NULL,
+  status ENUM('DRAFT','ACTIVE','INACTIVE') NOT NULL DEFAULT 'DRAFT',
+  shop_id CHAR(36) NOT NULL,
+  category_id CHAR(36) NULL,
+  city_id CHAR(36) NULL,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_services_shop FOREIGN KEY (shop_id) REFERENCES shops(id),
+  CONSTRAINT fk_services_category FOREIGN KEY (category_id) REFERENCES categories(id),
+  CONSTRAINT fk_services_city FOREIGN KEY (city_id) REFERENCES cities(id)
+);
+
+CREATE TABLE IF NOT EXISTS rentals (
+  id CHAR(36) PRIMARY KEY,
+  title VARCHAR(250) NOT NULL,
+  description TEXT NULL,
+  price DECIMAL(12,2) NULL,
+  price_unit ENUM('FIXED','FROM','HOURLY','PER_DAY','PER_HOUR') NOT NULL DEFAULT 'PER_DAY',
+  deposit DECIMAL(12,2) NULL,
+  availability_note VARCHAR(500) NULL,
+  image VARCHAR(500) NULL,
+  status ENUM('DRAFT','ACTIVE','INACTIVE') NOT NULL DEFAULT 'DRAFT',
+  shop_id CHAR(36) NOT NULL,
+  category_id CHAR(36) NULL,
+  city_id CHAR(36) NULL,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_rentals_shop FOREIGN KEY (shop_id) REFERENCES shops(id),
+  CONSTRAINT fk_rentals_category FOREIGN KEY (category_id) REFERENCES categories(id),
+  CONSTRAINT fk_rentals_city FOREIGN KEY (city_id) REFERENCES cities(id)
+);
+
+CREATE TABLE IF NOT EXISTS pos_products (
+  id CHAR(36) PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  sku VARCHAR(80) NULL,
+  price DECIMAL(12,2) NOT NULL DEFAULT 0,
+  stock INT NULL,
+  image VARCHAR(500) NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  shop_id CHAR(36) NOT NULL,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_pos_products_shop FOREIGN KEY (shop_id) REFERENCES shops(id)
+);
+
+CREATE TABLE IF NOT EXISTS pos_sales (
+  id CHAR(36) PRIMARY KEY,
+  receipt_number VARCHAR(40) NOT NULL UNIQUE,
+  subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+  discount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  total DECIMAL(12,2) NOT NULL DEFAULT 0,
+  payment_method ENUM('CASH','CARD','OTHER') NOT NULL DEFAULT 'CASH',
+  note VARCHAR(500) NULL,
+  shop_id CHAR(36) NOT NULL,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_pos_sales_shop FOREIGN KEY (shop_id) REFERENCES shops(id)
+);
+
+CREATE TABLE IF NOT EXISTS pos_sale_items (
+  id CHAR(36) PRIMARY KEY,
+  sale_id CHAR(36) NOT NULL,
+  product_id CHAR(36) NULL,
+  product_name VARCHAR(200) NOT NULL,
+  unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+  quantity INT NOT NULL DEFAULT 1,
+  line_total DECIMAL(12,2) NOT NULL DEFAULT 0,
+  created_by VARCHAR(36) NULL,
+  updated_by VARCHAR(36) NULL,
+  created_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_date DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_pos_sale_items_sale FOREIGN KEY (sale_id) REFERENCES pos_sales(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pos_sale_items_product FOREIGN KEY (product_id) REFERENCES pos_products(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS favorites (

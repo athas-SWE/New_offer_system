@@ -51,6 +51,21 @@ export class RegisterShopDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  instagramUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  facebookUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
   cityId?: string;
 
@@ -120,6 +135,21 @@ export class CreateShopDto {
   @IsOptional()
   @IsUUID()
   cityId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  instagramUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  facebookUrl?: string;
 }
 
 export class UpdateShopDto {
@@ -160,6 +190,21 @@ export class UpdateShopDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  instagramUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  facebookUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   latitude?: number;
@@ -185,6 +230,12 @@ export class UpdateShopStatusDto {
   @ApiProperty({ enum: ShopStatus })
   @IsEnum(ShopStatus)
   status: ShopStatus;
+}
+
+export class UpdateShopPosDto {
+  @ApiProperty({ description: 'Enable or disable Shopper POS upgrade for this shop' })
+  @IsBoolean()
+  posEnabled: boolean;
 }
 
 export class ShopQueryDto extends PaginationDto {

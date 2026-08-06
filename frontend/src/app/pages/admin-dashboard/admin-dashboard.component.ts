@@ -171,7 +171,19 @@ type Tab = 'overview' | 'businesses' | 'offers' | 'categories' | 'hero' | 'users
                       <button type="button" class="btn-secondary btn-compact !text-amber-800" (click)="setBusinessStatus(biz.id, 'SUSPENDED')">
                         Suspend
                       </button>
+                      <button
+                        type="button"
+                        class="btn-secondary btn-compact"
+                        [class.!text-teal-800]="!biz.posEnabled"
+                        [class.!text-red-700]="biz.posEnabled"
+                        (click)="toggleShopPos(biz)"
+                      >
+                        {{ biz.posEnabled ? 'Disable POS' : 'Enable POS' }}
+                      </button>
                     </div>
+                    @if (biz.posEnabled) {
+                      <p class="mt-2 text-xs font-medium text-teal-700">Shopper POS upgrade is active</p>
+                    }
                   </li>
                 }
               </ul>
@@ -691,6 +703,18 @@ export class AdminDashboardComponent implements OnInit {
         this.reloadAll();
       },
       error: (err: Error) => (this.actionError = err.message || 'Could not update business'),
+    });
+  }
+
+  toggleShopPos(biz: AdminBusiness): void {
+    this.actionError = '';
+    const next = !biz.posEnabled;
+    this.admin.updateShopPosAccess(biz.id, next).subscribe({
+      next: (updated) => {
+        this.actionMessage = `${updated.name}: Shopper POS ${next ? 'enabled' : 'disabled'}`;
+        this.loadBusinesses();
+      },
+      error: (err: Error) => (this.actionError = err.message || 'Could not update POS access'),
     });
   }
 

@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 import { SeoTitleStrategy } from './services/seo-title.strategy';
+import { provideAppIcons } from './icons/app-icons';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
+    provideAppIcons(),
     { provide: TitleStrategy, useClass: SeoTitleStrategy },
   ],
 };

@@ -72,6 +72,9 @@ export class ShopsService {
         locationUrl: location.locationUrl,
         latitude: location.latitude,
         longitude: location.longitude,
+        website: dto.website || null,
+        instagramUrl: dto.instagramUrl || null,
+        facebookUrl: dto.facebookUrl || null,
         cityId: dto.cityId || null,
         ownerId: savedUser.id,
         status: ShopStatus.PENDING,
@@ -101,6 +104,9 @@ export class ShopsService {
       locationUrl: location.locationUrl,
       phone: dto.phone || null,
       email: dto.email || null,
+      website: dto.website || null,
+      instagramUrl: dto.instagramUrl || null,
+      facebookUrl: dto.facebookUrl || null,
       latitude: location.latitude,
       longitude: location.longitude,
       cityId: dto.cityId || null,
@@ -180,6 +186,9 @@ export class ShopsService {
     if (dto.phone !== undefined) shop.phone = dto.phone;
     if (dto.email !== undefined) shop.email = dto.email;
     if (dto.logoUrl !== undefined) shop.logoUrl = dto.logoUrl;
+    if (dto.website !== undefined) shop.website = dto.website || null;
+    if (dto.instagramUrl !== undefined) shop.instagramUrl = dto.instagramUrl || null;
+    if (dto.facebookUrl !== undefined) shop.facebookUrl = dto.facebookUrl || null;
     if (dto.cityId !== undefined) shop.cityId = dto.cityId;
     if (dto.isActive !== undefined) shop.isActive = dto.isActive;
 
@@ -227,6 +236,14 @@ export class ShopsService {
   async updateStatus(id: string, dto: UpdateShopStatusDto, actorId: string) {
     const shop = await this.findOne(id);
     shop.status = dto.status;
+    shop.updatedBy = actorId;
+    await this.shopRepo.save(shop);
+    return this.findOne(id);
+  }
+
+  async updatePosAccess(id: string, posEnabled: boolean, actorId: string) {
+    const shop = await this.findOne(id);
+    shop.posEnabled = posEnabled;
     shop.updatedBy = actorId;
     await this.shopRepo.save(shop);
     return this.findOne(id);

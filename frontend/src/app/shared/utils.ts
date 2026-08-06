@@ -21,3 +21,23 @@ export function formatDate(value: string): string {
     year: 'numeric',
   }).format(new Date(value));
 }
+
+/** Ensure external links open correctly when users omit https:// */
+export function externalHref(url?: string | null): string | undefined {
+  const raw = (url || '').trim();
+  if (!raw) return undefined;
+  if (/^https?:\/\//i.test(raw) || /^mailto:/i.test(raw) || /^tel:/i.test(raw)) {
+    return raw;
+  }
+  return `https://${raw.replace(/^\/+/, '')}`;
+}
+
+/** Short label for long URLs in shop UI */
+export function displayUrl(url?: string | null, max = 42): string {
+  const href = externalHref(url);
+  if (!href) return '';
+  const cleaned = href.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  if (cleaned.length <= max) return cleaned;
+  return `${cleaned.slice(0, max - 1)}…`;
+}
+

@@ -11,6 +11,7 @@ export interface AdminBusiness {
   phone?: string | null;
   address?: string | null;
   description?: string | null;
+  posEnabled?: boolean;
   owner?: { id: string; name: string; email: string };
   createdDate?: string;
 }
@@ -62,6 +63,10 @@ export class AdminService {
 
   updateBusinessStatus(id: string, status: string): Observable<AdminBusiness> {
     return this.api.put<AdminBusiness>(`/shops/${id}/status`, { status });
+  }
+
+  updateShopPosAccess(id: string, posEnabled: boolean): Observable<AdminBusiness> {
+    return this.api.put<AdminBusiness>(`/shops/${id}/pos`, { posEnabled });
   }
 
   getManagedOffers(status?: string): Observable<DashboardOfferRow[]> {

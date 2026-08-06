@@ -4,10 +4,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
 import { StoresService } from '../../services/stores.service';
 import { OffersService } from '../../services/offers.service';
+import { ShopServicesService } from '../../services/shop-services.service';
+import { RentalsService } from '../../services/rentals.service';
 import { SeoService } from '../../services/seo.service';
-import { Offer, Store } from '../../models';
+import { Offer, RentalListing, ServiceListing, Store } from '../../models';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { LoadingSpinnerComponent } from '../../components/loading-spinner/loading-spinner.component';
+import { formatLkr, displayUrl } from '../../shared/utils';
+
+const SERVICE_PLACEHOLDER =
+  'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80';
+const RENTAL_PLACEHOLDER =
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80';
 
 @Component({
   selector: 'app-store-details',
@@ -73,12 +81,68 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
                 @if (store.website) {
                   <div>
                     <dt class="text-[var(--color-muted)]">Website</dt>
-                    <dd>
-                      <a [href]="store.website" target="_blank" rel="noopener" class="font-medium text-teal-700 underline">Visit site</a>
+                    <dd class="min-w-0">
+                      <a
+                        [href]="store.website"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex min-w-0 items-center gap-1.5 break-all font-medium text-teal-700 underline"
+                        [title]="store.website"
+                      >
+                        <mat-icon class="!h-4 !w-4 !text-base" svgIcon="website"></mat-icon>
+                        {{ websiteLabel }}
+                      </a>
                     </dd>
                   </div>
                 }
               </dl>
+
+              @if (store.instagramUrl || store.facebookUrl || store.website) {
+                <div class="mt-5">
+                  <h3 class="text-sm font-semibold text-teal-900">Follow</h3>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    @if (store.instagramUrl) {
+                      <a
+                        [href]="store.instagramUrl"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+                        [title]="store.instagramUrl"
+                        aria-label="Instagram"
+                      >
+                        <mat-icon class="!h-4 !w-4 !text-base" svgIcon="instagram"></mat-icon>
+                        <span class="truncate">Instagram</span>
+                      </a>
+                    }
+                    @if (store.facebookUrl) {
+                      <a
+                        [href]="store.facebookUrl"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+                        [title]="store.facebookUrl"
+                        aria-label="Facebook"
+                      >
+                        <mat-icon class="!h-4 !w-4 !text-base" svgIcon="facebook"></mat-icon>
+                        <span class="truncate">Facebook</span>
+                      </a>
+                    }
+                    @if (store.website) {
+                      <a
+                        [href]="store.website"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+                        [title]="store.website"
+                        aria-label="Website"
+                      >
+                        <mat-icon class="!h-4 !w-4 !text-base" svgIcon="website"></mat-icon>
+                        <span class="truncate">Website</span>
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
 
               @if (mapEmbedUrl || mapsLink) {
                 <div class="mt-6">
@@ -108,17 +172,79 @@ import { LoadingSpinnerComponent } from '../../components/loading-spinner/loadin
                 </div>
               }
             </div>
-            <div class="lg:col-span-2">
-              <h2 class="section-title !text-2xl">Current offers</h2>
-              @if (!storeOffers.length) {
-                <p class="mt-4 text-sm text-[var(--color-muted)]">No active offers right now.</p>
-              } @else {
-                <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                  @for (offer of storeOffers; track offer.id) {
-                    <app-offer-card [offer]="offer" />
-                  }
-                </div>
-              }
+            <div class="space-y-10 lg:col-span-2">
+              <div>
+                <h2 class="section-title !text-2xl">Current offers</h2>
+                @if (!storeOffers.length) {
+                  <p class="mt-4 text-sm text-[var(--color-muted)]">No active offers right now.</p>
+                } @else {
+                  <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                    @for (offer of storeOffers; track offer.id) {
+                      <app-offer-card [offer]="offer" />
+                    }
+                  </div>
+                }
+              </div>
+
+              <div>
+                <h2 class="section-title !text-2xl">Services</h2>
+                @if (!storeServices.length) {
+                  <p class="mt-4 text-sm text-[var(--color-muted)]">No services listed yet.</p>
+                } @else {
+                  <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    @for (svc of storeServices; track svc.id) {
+                      <a
+                        [routerLink]="['/services', svc.id]"
+                        class="overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-sm transition hover:shadow-md"
+                      >
+                        <img
+                          [src]="svc.imageUrl || servicePlaceholder"
+                          [alt]="svc.title"
+                          class="h-32 w-full object-cover"
+                        />
+                        <div class="p-3">
+                          <p class="font-semibold text-teal-900">{{ svc.title }}</p>
+                          @if (svc.price != null) {
+                            <p class="mt-1 text-sm font-bold text-teal-800">
+                              {{ priceLabel(svc.price, svc.priceUnit) }}
+                            </p>
+                          }
+                        </div>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div>
+                <h2 class="section-title !text-2xl">Rentals</h2>
+                @if (!storeRentals.length) {
+                  <p class="mt-4 text-sm text-[var(--color-muted)]">No rentals listed yet.</p>
+                } @else {
+                  <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    @for (rental of storeRentals; track rental.id) {
+                      <a
+                        [routerLink]="['/rentals', rental.id]"
+                        class="overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-sm transition hover:shadow-md"
+                      >
+                        <img
+                          [src]="rental.imageUrl || rentalPlaceholder"
+                          [alt]="rental.title"
+                          class="h-32 w-full object-cover"
+                        />
+                        <div class="p-3">
+                          <p class="font-semibold text-teal-900">{{ rental.title }}</p>
+                          @if (rental.price != null) {
+                            <p class="mt-1 text-sm font-bold text-teal-800">
+                              {{ priceLabel(rental.price, rental.priceUnit) }}
+                            </p>
+                          }
+                        </div>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -130,14 +256,24 @@ export class StoreDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly storesService = inject(StoresService);
   private readonly offersService = inject(OffersService);
+  private readonly shopServicesApi = inject(ShopServicesService);
+  private readonly rentalsApi = inject(RentalsService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly seo = inject(SeoService);
 
   store?: Store;
   storeOffers: Offer[] = [];
+  storeServices: ServiceListing[] = [];
+  storeRentals: RentalListing[] = [];
   loading = true;
   mapEmbedUrl?: SafeResourceUrl;
   mapsLink?: string;
+  readonly servicePlaceholder = SERVICE_PLACEHOLDER;
+  readonly rentalPlaceholder = RENTAL_PLACEHOLDER;
+
+  get websiteLabel(): string {
+    return displayUrl(this.store?.website) || 'Visit site';
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
@@ -148,8 +284,22 @@ export class StoreDetailsComponent implements OnInit {
       this.applySeo(store, id);
       if (store) {
         this.offersService.getOffers({ storeId: store.id }).subscribe((offers) => (this.storeOffers = offers));
+        this.shopServicesApi
+          .getServices({ shopId: store.id })
+          .subscribe((items) => (this.storeServices = items));
+        this.rentalsApi
+          .getRentals({ shopId: store.id })
+          .subscribe((items) => (this.storeRentals = items));
       }
     });
+  }
+
+  priceLabel(price: number, unit: string): string {
+    const amount = formatLkr(price);
+    if (unit === 'FROM') return `From ${amount}`;
+    if (unit === 'HOURLY' || unit === 'PER_HOUR') return `${amount}/hr`;
+    if (unit === 'PER_DAY') return `${amount}/day`;
+    return amount;
   }
 
   private applySeo(store: Store | undefined, id: string): void {

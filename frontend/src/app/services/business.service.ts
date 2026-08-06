@@ -22,8 +22,20 @@ export interface BusinessProfile {
   phone?: string | null;
   address?: string | null;
   logoUrl?: string | null;
+  website?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  posEnabled?: boolean;
   stores?: ShopLocation[];
   shops?: ShopLocation[];
+}
+
+export interface UpdateShopProfilePayload {
+  website?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  phone?: string;
+  description?: string;
 }
 
 export interface CreateStorePayload {
@@ -107,6 +119,15 @@ export class BusinessService {
 
   createStore(payload: CreateStorePayload): Observable<{ id: string }> {
     return this.api.post<{ id: string }>('/shops', payload);
+  }
+
+  updateShop(shopId: string, payload: UpdateShopProfilePayload): Observable<BusinessProfile> {
+    return this.api.put<BusinessProfile>(`/shops/${shopId}`, payload).pipe(
+      map((shop) => ({
+        ...shop,
+        logoUrl: resolveAssetUrl(shop.logoUrl) || shop.logoUrl,
+      })),
+    );
   }
 
   uploadShopLogo(shopId: string, file: File): Observable<BusinessProfile> {

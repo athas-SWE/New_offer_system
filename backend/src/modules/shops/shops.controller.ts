@@ -26,6 +26,7 @@ import {
   CreateShopDto,
   UpdateShopDto,
   UpdateShopStatusDto,
+  UpdateShopPosDto,
   ShopQueryDto,
 } from './dto/shop.dto';
 import { Public } from '../../common/decorators/public.decorator';
@@ -141,6 +142,18 @@ export class ShopsController {
     @CurrentUser('id') actorId: string,
   ) {
     return this.shopsService.updateStatus(id, dto, actorId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Put(':id/pos')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Enable or disable Shopper POS upgrade for a shop' })
+  updatePosAccess(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateShopPosDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.shopsService.updatePosAccess(id, dto.posEnabled, actorId);
   }
 
   @ApiBearerAuth('access-token')

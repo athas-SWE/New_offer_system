@@ -19,6 +19,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { HeroSlidesModule } from './modules/hero-slides/hero-slides.module';
+import { ServicesModule } from './modules/services/services.module';
+import { RentalsModule } from './modules/rentals/rentals.module';
+import { PosModule } from './modules/pos/pos.module';
 import { SeedModule } from './seed/seed.module';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 
@@ -27,6 +30,11 @@ import { Role } from './modules/users/entities/role.entity';
 import { Shop } from './modules/shops/entities/shop.entity';
 import { Offer } from './modules/offers/entities/offer.entity';
 import { OfferImage } from './modules/offers/entities/offer-image.entity';
+import { ServiceListing } from './modules/services/entities/service-listing.entity';
+import { Rental } from './modules/rentals/entities/rental.entity';
+import { PosProduct } from './modules/pos/entities/pos-product.entity';
+import { PosSale } from './modules/pos/entities/pos-sale.entity';
+import { PosSaleItem } from './modules/pos/entities/pos-sale-item.entity';
 import { Category } from './modules/categories/entities/category.entity';
 import { Favorite } from './modules/favorites/entities/favorite.entity';
 import { Notification } from './modules/notifications/entities/notification.entity';
@@ -59,6 +67,11 @@ import { HeroSlide } from './modules/hero-slides/entities/hero-slide.entity';
           Shop,
           Offer,
           OfferImage,
+          ServiceListing,
+          Rental,
+          PosProduct,
+          PosSale,
+          PosSaleItem,
           Category,
           Favorite,
           Notification,
@@ -113,6 +126,9 @@ import { HeroSlide } from './modules/hero-slides/entities/hero-slide.entity';
     UsersModule,
     ShopsModule,
     OffersModule,
+    ServicesModule,
+    RentalsModule,
+    PosModule,
     CategoriesModule,
     LocationsModule,
     NotificationsModule,

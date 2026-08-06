@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { memoryStorage, Options } from 'multer';
 
-export type UploadSubdir = 'offers' | 'shops' | 'hero';
+export type UploadSubdir = 'offers' | 'shops' | 'hero' | 'services' | 'rentals';
 
 const IMAGE_MIME = /^image\/(jpeg|jpg|png|gif|webp)$/i;
 

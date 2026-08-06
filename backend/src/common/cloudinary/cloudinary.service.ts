@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
-export type CloudinaryFolder = 'offers' | 'shops' | 'hero';
+export type CloudinaryFolder = 'offers' | 'shops' | 'hero' | 'services' | 'rentals';
 
 @Injectable()
 export class CloudinaryService implements OnModuleInit {

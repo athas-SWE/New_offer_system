@@ -9,6 +9,8 @@ export interface Store {
   locationUrl?: string;
   phone?: string;
   website?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
   ownerName?: string;
   categoryIds?: string[];
   rating?: number;

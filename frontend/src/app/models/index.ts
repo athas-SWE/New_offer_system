@@ -4,3 +4,6 @@ export * from './store.model';
 export * from './category.model';
 export * from './notification.model';
 export * from './dashboard.model';
+export * from './service-listing.model';
+export * from './rental.model';
+export * from './pos.model';
