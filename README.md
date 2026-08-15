@@ -36,7 +36,7 @@ Offer Lanka connects shoppers with time-bound discounts across Sri Lankan cities
 | Cache (optional) | Redis 7 |
 | Auth | JWT + optional Firebase Auth UID linkage |
 | CI/CD | GitHub Actions |
-| Deploy | Backend → Google Cloud Run; Frontend → Firebase Hosting |
+| Deploy | Backend → Vercel; Database → Aiven MySQL 8 |
 
 ---
 
@@ -45,8 +45,9 @@ Offer Lanka connects shoppers with time-bound discounts across Sri Lankan cities
 - Node.js **20+** and npm
 - Docker Desktop (for MySQL / Redis)
 - MySQL 8 client (optional, if not using Docker)
-- Firebase project (for auth/hosting in non-local environments)
-- Google Cloud project (for Cloud Run deployment)
+- Firebase project (optional, for auth/push)
+- Aiven MySQL 8 service (production)
+- Vercel account (backend deploy)
 
 ---
 
@@ -210,27 +211,16 @@ Soft deletes (`is_deleted`) keep historical rows; queries should filter `is_dele
 
 ---
 
-## Deployment to GCP
+## Deployment (Vercel + Aiven)
 
-### Backend → Cloud Run
+Production backend is a Vercel serverless function talking to **Aiven MySQL**. Full steps: [`backend/README.md`](backend/README.md#deploy-to-vercel--aiven).
 
-1. Create a GCP project and enable Cloud Run, Artifact Registry, and Secret Manager.
-2. Build a container from `backend/` and push to Artifact Registry.
-3. Deploy to Cloud Run with env vars / secrets for DB, JWT, and Firebase Admin.
-4. Point Cloud SQL (MySQL 8) or a managed MySQL instance at the service; apply `database/schema.sql`.
-5. Wire CI using [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — currently a **stub**; uncomment `gcloud`/`docker` steps and set:
+1. Create Aiven MySQL 8; allow `0.0.0.0/0`; copy Service URI (`ssl-mode=REQUIRED`).
+2. From `backend/`: `npx prisma migrate deploy` with `DATABASE_URL` set to that URI.
+3. In Vercel: import the repo, **Root Directory = `backend`**, paste vars from [`backend/.env.vercel.example`](backend/.env.vercel.example).
+4. Confirm `https://<api>.vercel.app/api/health` returns `db: up`.
 
-   - `secrets.GCP_WORKLOAD_IDENTITY_PROVIDER`
-   - `secrets.GCP_SERVICE_ACCOUNT`
-   - `vars.GCP_PROJECT_ID`, `vars.GCP_REGION`, etc.
-
-### Frontend → Firebase Hosting
-
-1. Create a Firebase project; enable Hosting (and Auth if used).
-2. Configure `firebase.json` / `.firebaserc` in `frontend/` (or repo root).
-3. Build: `ng build --configuration=production` with production `API_BASE_URL`.
-4. Deploy: `firebase deploy --only hosting`.
-5. CI stub in `deploy.yml` uses `FIREBASE_TOKEN` / project vars — replace placeholders when ready.
+The GitHub [deploy workflow](.github/workflows/deploy.yml) only applies Prisma migrations when `secrets.DATABASE_URL` is set. Vercel Git integration deploys the API.
 
 ### CI
 

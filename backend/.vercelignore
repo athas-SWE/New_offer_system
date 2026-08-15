@@ -1,0 +1,9 @@
+test
+coverage
+**/*.spec.ts
+.git
+*.md
+.env
+.env.*
+!.env.example
+uploads

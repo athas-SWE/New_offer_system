@@ -89,9 +89,10 @@ test-results/
 playwright-report/
 
 # =============================================================================
-# Firebase / GCP
+# Firebase / GCP / Vercel
 # =============================================================================
 .firebase/
 .firebaserc.local
 *-debug.log
 .gcloud/
+.vercel/
