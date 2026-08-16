@@ -18,7 +18,7 @@ export function swaggerUiHtml(): string {
     <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js" crossorigin></script>
     <script>
       window.ui = SwaggerUIBundle({
-        url: '/api/docs-json',
+        url: window.location.origin + '/api/docs-json',
         dom_id: '#swagger-ui',
         deepLinking: true,
         persistAuthorization: true,

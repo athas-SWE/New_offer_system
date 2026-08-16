@@ -13,11 +13,17 @@ function splitOrigins(raw: string | undefined): string[] | true {
   return value.split(',').map((o) => o.trim()).filter(Boolean);
 }
 
+function withHttps(url: string): string {
+  const trimmed = url.replace(/\/$/, '');
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 function publicApiUrl(configService: ConfigService): string | undefined {
   const explicit = configService.get<string>('PUBLIC_API_URL');
-  if (explicit) return explicit.replace(/\/$/, '');
+  if (explicit) return withHttps(explicit);
   const vercel = process.env.VERCEL_URL;
-  if (vercel) return `https://${vercel.replace(/^https?:\/\//, '')}`;
+  if (vercel) return withHttps(vercel);
   return undefined;
 }
 
@@ -57,10 +63,31 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
     }),
   );
 
-  const corsOrigin = splitOrigins(configService.get<string>('CORS_ORIGIN'));
+  const configuredOrigins = splitOrigins(configService.get<string>('CORS_ORIGIN'));
+  const apiPublicUrl = publicApiUrl(configService);
   app.enableCors({
-    origin: corsOrigin,
-    credentials: corsOrigin !== true,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (configuredOrigins === true) {
+        callback(null, true);
+        return;
+      }
+      const allowed = [...configuredOrigins];
+      if (apiPublicUrl) allowed.push(apiPublicUrl);
+      if (allowed.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      if (process.env.VERCEL && origin.endsWith('.vercel.app')) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
   });
 
   app.useGlobalPipes(
@@ -94,12 +121,14 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
           'Seeded: `admin@offerlanka.lk` / `Admin@12345` · `business@offerlanka.lk` / `Business@12345`',
         ].join('\n'),
       )
-      .setVersion('1.0')
-      .addServer('http://localhost:3000', 'Local');
+      .setVersion('1.0');
 
     const prodUrl = publicApiUrl(configService);
     if (prodUrl) {
-      swaggerConfig.addServer(prodUrl, 'Production');
+      swaggerConfig.addServer(prodUrl, 'Vercel');
+    }
+    if (!process.env.VERCEL) {
+      swaggerConfig.addServer('http://localhost:3000', 'Local');
     }
 
     swaggerConfig
