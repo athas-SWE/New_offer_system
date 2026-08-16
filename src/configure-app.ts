@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import { Request, Response } from 'express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { swaggerUiHtml } from './swagger-ui.html';
 
 function splitOrigins(raw: string | undefined): string[] | true {
   const value = (raw || '*').trim();
@@ -30,7 +32,7 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: [`'self'`],
-          styleSrc: [`'self'`, `'unsafe-inline'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`, 'https://unpkg.com'],
           imgSrc: [
             `'self'`,
             'data:',
@@ -38,10 +40,17 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
             'validator.swagger.io',
             'http://localhost:4200',
             'https://res.cloudinary.com',
+            'https://unpkg.com',
           ],
-          fontSrc: [`'self'`, 'data:'],
+          fontSrc: [`'self'`, 'data:', 'https://unpkg.com'],
           connectSrc: [`'self'`],
-          scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+          scriptSrc: [
+            `'self'`,
+            `'unsafe-inline'`,
+            `'unsafe-eval'`,
+            'https://unpkg.com',
+          ],
+          scriptSrcAttr: [`'unsafe-inline'`],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -126,19 +135,19 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
         `${controllerKey}_${methodKey}`,
     });
 
-    SwaggerModule.setup('api/docs', app, document, {
-      useGlobalPrefix: false,
-      swaggerOptions: {
-        persistAuthorization: true,
-        docExpansion: 'none',
-        filter: true,
-        tagsSorter: 'alpha',
-        operationsSorter: 'alpha',
-        displayRequestDuration: true,
-      },
-      customSiteTitle: 'Offer Lanka API Docs',
-      customCss: '.swagger-ui .topbar { display: none }',
-      jsonDocumentUrl: 'api/docs-json',
-    });
+    // CDN Swagger UI — Nest's default UI serves swagger-ui-dist from disk,
+    // which is missing/blank on Vercel serverless. JSON + HTML are public Express routes.
+    const http = app.getHttpAdapter();
+    const sendJson = (_req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.json(document);
+    };
+    const sendHtml = (_req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(swaggerUiHtml());
+    };
+    http.get('/api/docs-json', sendJson);
+    http.get('/api/docs', sendHtml);
+    http.get('/api/docs/', sendHtml);
   }
 }
