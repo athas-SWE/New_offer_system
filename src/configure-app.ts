@@ -39,6 +39,8 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
             'http://localhost:4200',
             'https://res.cloudinary.com',
           ],
+          fontSrc: [`'self'`, 'data:'],
+          connectSrc: [`'self'`],
           scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
         },
       },
@@ -125,6 +127,7 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
     });
 
     SwaggerModule.setup('api/docs', app, document, {
+      useGlobalPrefix: false,
       swaggerOptions: {
         persistAuthorization: true,
         docExpansion: 'none',

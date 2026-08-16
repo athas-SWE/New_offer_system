@@ -9,7 +9,7 @@
   ],
   "functions": {
     "api/[[...path]].js": {
-      "includeFiles": "dist/**"
+      "includeFiles": "{dist/**,node_modules/swagger-ui-dist/**}"
     }
   }
 }
