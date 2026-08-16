@@ -1,10 +1,29 @@
--- Shop social / website links
-ALTER TABLE `shops`
-  ADD COLUMN `website` VARCHAR(500) NULL,
-  ADD COLUMN `instagram_url` VARCHAR(500) NULL,
-  ADD COLUMN `facebook_url` VARCHAR(500) NULL;
+-- Shop social / website links (idempotent: first Aiven apply may have added these before the FK failed)
+SET @db := DATABASE();
 
--- Services catalog
+SET @sql := (
+  SELECT IF(COUNT(*) = 0, 'ALTER TABLE `shops` ADD COLUMN `website` VARCHAR(500) NULL', 'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'shops' AND COLUMN_NAME = 'website'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+  SELECT IF(COUNT(*) = 0, 'ALTER TABLE `shops` ADD COLUMN `instagram_url` VARCHAR(500) NULL', 'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'shops' AND COLUMN_NAME = 'instagram_url'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+  SELECT IF(COUNT(*) = 0, 'ALTER TABLE `shops` ADD COLUMN `facebook_url` VARCHAR(500) NULL', 'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'shops' AND COLUMN_NAME = 'facebook_url'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Must match shops/categories/cities (utf8mb4_unicode_ci). Aiven DB default is often utf8mb4_0900_ai_ci,
+-- which makes CHAR(36) FKs fail with errno 3780 if omitted here.
 CREATE TABLE IF NOT EXISTS `services` (
   `id` CHAR(36) NOT NULL,
   `title` VARCHAR(250) NOT NULL,
@@ -25,9 +44,8 @@ CREATE TABLE IF NOT EXISTS `services` (
   CONSTRAINT `fk_services_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`),
   CONSTRAINT `fk_services_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`),
   CONSTRAINT `fk_services_city` FOREIGN KEY (`city_id`) REFERENCES `cities`(`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Rentals catalog
 CREATE TABLE IF NOT EXISTS `rentals` (
   `id` CHAR(36) NOT NULL,
   `title` VARCHAR(250) NOT NULL,
@@ -50,4 +68,4 @@ CREATE TABLE IF NOT EXISTS `rentals` (
   CONSTRAINT `fk_rentals_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`),
   CONSTRAINT `fk_rentals_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`),
   CONSTRAINT `fk_rentals_city` FOREIGN KEY (`city_id`) REFERENCES `cities`(`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

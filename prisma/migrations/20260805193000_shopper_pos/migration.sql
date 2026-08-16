@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `pos_products` (
   PRIMARY KEY (`id`),
   KEY `idx_pos_products_shop` (`shop_id`),
   CONSTRAINT `fk_pos_products_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- POS sales / receipts
 CREATE TABLE IF NOT EXISTS `pos_sales` (
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `pos_sales` (
   UNIQUE KEY `uq_pos_sales_receipt` (`receipt_number`),
   KEY `idx_pos_sales_shop` (`shop_id`),
   CONSTRAINT `fk_pos_sales_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops`(`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `pos_sale_items` (
   `id` CHAR(36) NOT NULL,
@@ -59,4 +59,4 @@ CREATE TABLE IF NOT EXISTS `pos_sale_items` (
   KEY `idx_pos_sale_items_sale` (`sale_id`),
   CONSTRAINT `fk_pos_sale_items_sale` FOREIGN KEY (`sale_id`) REFERENCES `pos_sales`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_pos_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `pos_products`(`id`) ON DELETE SET NULL
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
